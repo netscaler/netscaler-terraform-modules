@@ -5,6 +5,6 @@ for AWS.
 
 To include a definition in your plan just add it with the `-var-file` option.
 
-For exaxmple
+For example
 
 `terraform plan -var-file=citrix_adc_vpx_customer_licensed_12.1-50.28.tfvars.json`
