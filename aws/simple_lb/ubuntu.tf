@@ -57,6 +57,7 @@ resource "null_resource" "networking_setup" {
     inline = [
       "${format("sudo ip addr add dev eth1 %v/24", element(aws_network_interface.server_data.*.private_ip, count.index))}",
       "sudo ip link set eth1 up",
+      "sudo apt update -y",
       "sudo apt install -y apache2",
       "${format("sudo bash -c 'echo \"Hello from Terraformed Apache Web Server %v\" > /var/www/html/index.html'", count.index + 1)}",
       "sudo systemctl restart apache2"

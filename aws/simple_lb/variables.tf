@@ -58,7 +58,7 @@ variable "instance_id" {
 
 # Networking configuration
 variable "vip" {
-  description = "The Citrix ADC VIP"
+  description = "The VIP address of the primary node."
 }
 
 variable "client_subnet_id" {}
