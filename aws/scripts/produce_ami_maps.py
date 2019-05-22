@@ -4,93 +4,190 @@ import argparse
 import os.path
 from collections import OrderedDict
 
+
+# Do the 12.0-62.9 first
 generator_list = []
 
-generator_list.append({
-    'filename': 'citrix_adc_vpx_customer_licensed_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0fe34330ab860f7f6',
-})
 
+# 12.0-61.9
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_platinum_edition_10Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0635b111d6c6884e2',
+    'filename': 'citrix_adc_vpx_customer_licensed_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-06ae528dc35730099',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_enterprise_edition_10Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0afc262f5eac35b7b',
+    'filename': 'citrix_adc_vpx_standard_edition_10Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-06274c40f24113232',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_platinum_edition_200Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-035cf6e34ff11c086',
+    'filename': 'citrix_adc_vpx_platinum_edition_10Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-001bb9492e090208f',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_enterprise_edition_200Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-05bcff04a7ce8167c',
+    'filename': 'citrix_adc_vpx_standard_edition_200Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-009025b3b4b66b6f6',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_standard_edition_1000Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0dce33ba94490d83f',
+    'filename': 'citrix_adc_vpx_express_20Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0b482f2fbe9556e78',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_standard_edition_10Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0d7e176b61cb877f0',
+    'filename': 'citrix_adc_vpx_enterprise_edition_10Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-058270c88330d4c08',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_standard_edition_200Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0faa44954f3b13064',
+    'filename': 'citrix_adc_vpx_platinum_edition_200Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-066e10f436a021af9',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_platinum_edition_1000Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-00451060dcaa8f49c',
+    'filename': 'citrix_adc_vpx_enterprise_edition_200Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-02d854b050d6fa5f3',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_enterprise_edition_1000Mbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-018066ea8b20ddb3c',
+    'filename': 'citrix_adc_vpx_enterprise_edition_1000Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-03a57557342b86960',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_express_20Mbps_12.1-49.27.tfvars.json',
-    'us-east-1-ami-id': 'ami-06840c214b8adbd77',
+    'filename': 'citrix_adc_vpx_standard_edition_1000Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0287248bc343b049a',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_enterprise_edition_5Gbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0044fb813dfe2b0af',
+    'filename': 'citrix_adc_vpx_platinum_edition_1000Mbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-08f38c95bdc7f1d5e',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_standard_edition_3Gbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0184ed41e2fe7503a',
+    'filename': 'citrix_adc_vpx_enterprise_edition_5Gbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0cb457bc20529db4d',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_platinum_edition_3Gbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0eeb2cd33f6a98b52',
+    'filename': 'citrix_adc_vpx_standard_edition_3Gbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0b856a499086b2665',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_enterprise_edition_3Gbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0b3918c778e5e3759',
+    'filename': 'citrix_adc_vpx_standard_edition_5Gbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0645ed6f045864b6e',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_standard_edition_5Gbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-0280ce3c3eef17f5c',
+    'filename': 'citrix_adc_vpx_platinum_edition_5Gbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0754ce1d4387d521e',
 })
 
 generator_list.append({
-    'filename': 'citrix_adc_vpx_platinum_edition_5Gbps_12.1-50.28.tfvars.json',
-    'us-east-1-ami-id': 'ami-02e0f2f2759ae051b',
+    'filename': 'citrix_adc_vpx_platinum_edition_3Gbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-0f34eb17303f74e39',
 })
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_enterprise_edition_3Gbps_12.0-61.9.tfvars.json',
+    'us-east-1-ami-id': 'ami-09d766381d487b0e4',
+})
+
+
+
+
+
+# 12.1-51.20
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_customer_licensed_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-035cec069e7c0b4e4',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_standard_edition_10Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-097e9ab4cc9b4228c',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_platinum_edition_10Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-020324271ff9ac26f',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_standard_edition_200Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0e9211f8c9cda1ff7',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_express_20Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-021d54e00907f90cd',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_enterprise_edition_10Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0d5d9968786b571e8',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_platinum_edition_200Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-068e926de46122f5d',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_enterprise_edition_200Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-08006c66d63065bb0',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_enterprise_edition_1000Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-05f4ffc7f0818bc4b',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_standard_edition_1000Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0043ae171a5fc6434',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_platinum_edition_1000Mbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-00df6ce3ed189b30f',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_enterprise_edition_5Gbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0786ebc7142e687dd',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_standard_edition_3Gbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-03765ad2b2dae8441',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_standard_edition_5Gbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0b5ff0b5876dc1b62',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_platinum_edition_5Gbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0f991e26f44d692b1',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_platinum_edition_3Gbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-0020bcffeb788b01e',
+})
+
+generator_list.append({
+    'filename': 'citrix_adc_vpx_enterprise_edition_3Gbps_12.1-51.20.tfvars.json',
+    'us-east-1-ami-id': 'ami-026259ffdab87433d',
+})
+
+
 
 aws_region_names = []
 
