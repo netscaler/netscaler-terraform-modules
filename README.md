@@ -15,5 +15,7 @@ It covers deployment scenarios for AWS.
 Currently the following scenarios exist
 
 * Citrix ADC Standalone
+* Citrix ADC in a high availability pair in a single AWS availability zone.
+* Citrix ADC in a high availability pair across two AWS availability zones.
 
 Refer to each folder's README file for more information.

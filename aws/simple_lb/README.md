@@ -21,4 +21,3 @@ The netscaler terraform provider repository can be found [here](https://github.c
 * `lbvserver.tf`: Setup for the Citrix ADC load balancing configuration.
 * `variables.tf`: Input variables. These should be populated with values taken from the Citrix ADC deployment.
 * `outputs.tf`: Output variables. They contain the management ips of the Ubuntu nodes.
-* `terraform.tfvars`: Sample values for the input variables.

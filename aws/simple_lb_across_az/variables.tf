@@ -30,7 +30,7 @@
 # AWS Provider Configuration
 
 variable "aws_region" {
-  description = "The AWS region to create things in"
+  description = "The AWS region to create entities in."
   default     = "us-east-1"
 }
 
@@ -44,7 +44,7 @@ variable "aws_secret_key" {
 
 # Citrix ADC Provider Configuration
 variable "nsip" {
-  description = "The NSIP"
+  description = "The NSIP of the primary node."
 }
 
 variable "username" {
@@ -56,21 +56,36 @@ variable "instance_id" {
   description = "The default password for Citrix ADC after EC2 instance initialization"
 }
 
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
 # Services configuration
 variable "count" {
   description = "The count of backend services"
   default     = 2
 }
 
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}
+variable "management_security_group_id" {
+  description = "Security group id for the management interfaces."
+}
+
+variable "management_subnet_ids" {
+  description = "Subnets for the management interfaces."
+  type = "list"
+}
+
+variable "server_security_group_id" {
+  description = "Security group id for the server interfaces."
+}
+
+variable "server_subnet_ids" { 
+  description = "Subnet ids for the server interfaces."
+  type = "list" 
+}
+
+variable "lbvserver_name" {
+  description = "Name of the lb vserver."
+  default = "vserver1"
+}
+
+variable "server_subnets_cidr_block" {
+  description = "Server subnet cidr blocks."
+  type = "list"
+}

@@ -27,50 +27,32 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
-
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+output "nsips" {
+  value       = "${aws_eip.nsip.*.public_ip}"
+  description = "List of the public IP addresses assigned to the management interfaces."
 }
 
-variable "aws_access_key" {
-  description = "The AWS access key"
+output "client_ip" {
+  value       = "${aws_eip.client.public_ip}"
+  description = "IP address which clients on the data plain will use to access backend services."
 }
 
-variable "aws_secret_key" {
-  description = "The AWS secret key"
+output "private_vips" {
+  value       = "${aws_network_interface.client.*.private_ip}"
+  description = "List of the private IP addresses assinged to the client subnet interfaces."
 }
 
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
+output "snips" {
+  value       = "${aws_network_interface.server.*.private_ip}"
+  description = "List of the private IP addresses assigned to the server subnet interfaces."
 }
 
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
+output "instance_ids" {
+  value       = "${aws_instance.citrix_adc.*.id}"
+  description = "List of the VPX instances ids."
 }
 
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
+output "private_nsips" {
+  value       = "${aws_network_interface.management.*.private_ip}"
+  description = "List of the private IP addresses assigned to the management interfaces."
 }
-
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}

@@ -27,50 +27,32 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
-
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+output "client_subnet_ids" {
+  value       = "${aws_subnet.client.*.id}"
+  description = "List of subnet ids for the client interfaces."
 }
 
-variable "aws_access_key" {
-  description = "The AWS access key"
+output "management_subnet_ids" {
+  value       = "${aws_subnet.management.*.id}"
+  description = "List of subnet ids for the management interfaces."
 }
 
-variable "aws_secret_key" {
-  description = "The AWS secret key"
+output "server_subnet_ids" {
+  value       = "${aws_subnet.server.*.id}"
+  description = "List of subnet ids for the server interfaces."
 }
 
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
+output "server_security_group_id" {
+  value       = "${aws_security_group.server.id}"
+  description = "Security group id for the server interfaces."
 }
 
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
+output "management_security_group_id" {
+  value       = "${aws_security_group.management.id}"
+  description = "Security group id for the management interfaces."
 }
 
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
+output "server_subnets_cidr_block" {
+  value       = "${aws_subnet.server.*.cidr_block}"
+  description = "Cidr blocks of the server subnets."
 }
-
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}

@@ -27,50 +27,21 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
+resource "null_resource" "setup_ha_pair" {
 
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+
+  provisioner  "local-exec" {
+    environment = {
+	PRIMARY_NODE_PUBLIC_NSIP = "${element(aws_eip.nsip.*.public_ip, 0)}"
+	SECONDARY_NODE_PUBLIC_NSIP = "${element(aws_eip.nsip.*.public_ip, 1)}"
+
+	PRIMARY_NODE_PRIVATE_NSIP = "${element(aws_network_interface.management.*.private_ip, 0)}"
+	SECONDARY_NODE_PRIVATE_NSIP = "${element(aws_network_interface.management.*.private_ip, 1)}"
+
+	PRIMARY_NODE_INSTANCE_ID = "${element(aws_instance.citrix_adc.*.id, 0)}"
+	SECONDARY_NODE_INSTANCE_ID = "${element(aws_instance.citrix_adc.*.id, 1)}"
+    }
+    interpreter = [ "bash" ]
+    command = "setup_ha_nitro.sh"
+  }
 }
-
-variable "aws_access_key" {
-  description = "The AWS access key"
-}
-
-variable "aws_secret_key" {
-  description = "The AWS secret key"
-}
-
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
-}
-
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
-}
-
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
-}
-
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}

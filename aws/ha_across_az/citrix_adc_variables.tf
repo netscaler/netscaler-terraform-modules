@@ -27,50 +27,57 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
+variable "vpx_ami_map" {
+  description = <<EOF
 
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+AMI map for VPX
+Defaults to VPX Express 12.1-51.20
+
+EOF
+
+  default = {
+    "ap-northeast-1" = "ami-02454e34c1d7d6b22"
+    "ap-northeast-2" = "ami-0fa0efa416deb27c1"
+    "ap-south-1"     = "ami-0fde08f60b42ea96f"
+    "ap-southeast-1" = "ami-0803c80c209abd277"
+    "ap-southeast-2" = "ami-01d523722c729c948"
+    "ca-central-1"   = "ami-0ee43001be430451d"
+    "eu-central-1"   = "ami-09c314e7d378b3ab7"
+    "eu-west-1"      = "ami-03d2a8e34f015d104"
+    "eu-west-2"      = "ami-039541dfcf995a477"
+    "sa-east-1"      = "ami-063eefb0247cd422d"
+    "us-east-1"      = "ami-021d54e00907f90cd"
+    "us-east-2"      = "ami-0619cf1188dcd2ec1"
+    "us-west-1"      = "ami-00fe4feee9f9b37e2"
+    "us-west-2"      = "ami-0cb7a2b575cc622c8"
+  }
 }
 
-variable "aws_access_key" {
-  description = "The AWS access key"
+variable "ns_instance_type" {
+  description = <<EOF
+EC2 instance type.
+
+The following values are allowed:
+
+t2.medium
+t2.large
+t2.xlarge
+t2.2xlarge
+m3.large
+m3.xlarge
+m3.2xlarge
+m4.large
+m4.xlarge
+m4.2xlarge
+m4.4xlarge
+m4.10xlarge
+c4.large
+c4.xlarge
+c4.2xlarge
+c4.4xlarge
+c4.8xlarge
+
+EOF
+
+  default = "m4.large"
 }
-
-variable "aws_secret_key" {
-  description = "The AWS secret key"
-}
-
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
-}
-
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
-}
-
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
-}
-
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}

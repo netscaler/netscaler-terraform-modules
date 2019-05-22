@@ -27,50 +27,35 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
 
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+add_ha_node () {
+curl \
+-H "Content-Type: application/json" \
+-H "X-NITRO-USER: nsroot" \
+-H "X-NITRO-PASS: $2" \
+-d "{\"hanode\": { \"id\": 1, \"ipaddress\": \"$3\"}}" \
+-k \
+https://$1/nitro/v1/config/hanode
 }
 
-variable "aws_access_key" {
-  description = "The AWS access key"
+save_config () {
+curl \
+-H "Content-Type: application/json" \
+-H "X-NITRO-USER: nsroot" \
+-H "X-NITRO-PASS: $2" \
+-d "{\"nsconfig\":{}}" \
+-k \
+https://$1/nitro/v1/config/nsconfig?action=save
 }
 
-variable "aws_secret_key" {
-  description = "The AWS secret key"
-}
+sleep 5
 
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
-}
+add_ha_node $PRIMARY_NODE_PUBLIC_NSIP $PRIMARY_NODE_INSTANCE_ID $SECONDARY_NODE_PRIVATE_NSIP
 
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
-}
+sleep 5
 
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
-}
+add_ha_node $SECONDARY_NODE_PUBLIC_NSIP $SECONDARY_NODE_INSTANCE_ID $PRIMARY_NODE_PRIVATE_NSIP
 
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
+sleep 5
 
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}
+save_config $PRIMARY_NODE_PUBLIC_NSIP $PRIMARY_NODE_INSTANCE_ID

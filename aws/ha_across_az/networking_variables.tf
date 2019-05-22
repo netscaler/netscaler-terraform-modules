@@ -27,50 +27,25 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
-
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+variable "vpc_cidr_block" {
+  description = "The CIDR block that will be used for all needed subnets"
 }
 
-variable "aws_access_key" {
-  description = "The AWS access key"
+variable "management_subnet_cidr_blocks" {
+  description = "The CIDR blocks that will be used for the management subnet. Must be contained inside the VPC cidr block."
+  type        = "list"
 }
 
-variable "aws_secret_key" {
-  description = "The AWS secret key"
+variable "client_subnet_cidr_blocks" {
+  description = "The CIDR blocks that will be used for the client subnet. Must be contained inside the VPC cidr block."
+  type        = "list"
 }
 
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
+variable "server_subnet_cidr_blocks" {
+  description = "The CIDR blocks that will be used for the server subnet. Must be contained inside the VPC cidr block."
+  type        = "list"
 }
 
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
+variable "controlling_subnet" {
+  description = "The CIDR block of the machines that will SSH into the NSIPs of the VPX HA pair."
 }
-
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
-}
-
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}

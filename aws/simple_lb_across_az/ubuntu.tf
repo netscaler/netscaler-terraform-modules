@@ -57,18 +57,19 @@ resource "null_resource" "networking_setup" {
     inline = [
       "${format("sudo ip addr add dev eth1 %v/24", element(aws_network_interface.server_data.*.private_ip, count.index))}",
       "sudo ip link set eth1 up",
+      "${format("sudo ip route add %v via %v", var.server_subnets_cidr_block[count.index == 0 ? 1:0], cidrhost(var.server_subnets_cidr_block[count.index], 1))}",
       "sudo apt update -y",
       "sudo apt install -y apache2",
       "${format("sudo bash -c 'echo \"Hello from Terraformed Apache Web Server %v\" > /var/www/html/index.html'", count.index + 1)}",
       "sudo systemctl restart apache2"
     ]
   }
-
   count = "${var.count}"
 }
 
+
 resource "aws_network_interface" "server_management" {
-  subnet_id = "${var.management_subnet_id}"
+  subnet_id = "${var.management_subnet_ids[count.index]}"
 
   security_groups = ["${var.management_security_group_id}"]
 
@@ -80,7 +81,7 @@ resource "aws_network_interface" "server_management" {
 }
 
 resource "aws_network_interface" "server_data" {
-  subnet_id       = "${var.server_subnet_id}"
+  subnet_id       = "${var.server_subnet_ids[count.index]}"
   security_groups = ["${var.server_security_group_id}"]
 
   tags = {

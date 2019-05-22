@@ -27,50 +27,32 @@
 #
 ########################################################################################
 
-# AWS Provider Configuration
-
-variable "aws_region" {
-  description = "The AWS region to create things in"
-  default     = "us-east-1"
+output "nsips" {
+  description = "List of the public IP addresses assigned to the management interfaces."
+  value = "${aws_eip.nsip.*.public_ip}"
 }
 
-variable "aws_access_key" {
-  description = "The AWS access key"
+output "client_ip" {
+  description = "IP address which clients on the data plain will use to access backend services."
+  value = "${aws_eip.client.public_ip}"
 }
 
-variable "aws_secret_key" {
-  description = "The AWS secret key"
+output "vip" {
+  description = "The private VIP address assinged to the client subnet interface of the primary node."
+  value = "${aws_eip.client.private_ip}"
 }
 
-# Citrix ADC Provider Configuration
-variable "nsip" {
-  description = "The NSIP"
+output "snip" {
+  description = "The private IP addresses assigned to the server subnet interface."
+  value = "${aws_network_interface.server.private_ip}"
 }
 
-variable "username" {
-  description = "The username for Citrix ADC"
-  default     = "nsroot"
+output "instance_ids" {
+  description = "List of the VPX instances ids."
+  value = "${aws_instance.citrix_adc.*.id}"
 }
 
-variable "instance_id" {
-  description = "The default password for Citrix ADC after EC2 instance initialization"
+output "private_nsips" {
+  description = "List of the private IP addresses assigned to the management interfaces."
+  value = "${aws_network_interface.management.*.private_ip}"
 }
-
-# Networking configuration
-variable "vip" {
-  description = "The VIP address of the primary node."
-}
-
-variable "client_subnet_id" {}
-
-variable "management_subnet_id" {}
-
-# Services configuration
-variable "count" {
-  description = "The count of backend services"
-  default     = 2
-}
-
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}
