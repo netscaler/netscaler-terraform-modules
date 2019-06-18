@@ -27,7 +27,6 @@
 #
 ########################################################################################
 
-
 variable "aws_region" {
   description = "The AWS region to create entities in."
   default     = "us-east-1"
@@ -35,7 +34,7 @@ variable "aws_region" {
 
 variable "aws_availability_zones" {
   description = "List of two availability zones."
-  type        = "list"
+  type        = list(string)
 }
 
 variable "aws_access_key" {

@@ -29,10 +29,10 @@
 
 output "management_ips" {
   description = "The management ip addresses."
-  value = "${aws_instance.ubuntu.*.public_ip}"
+  value       = aws_instance.ubuntu.*.public_ip
 }
 
 output "service_ips" {
   description = "The service ip addresses."
-  value = "${aws_network_interface.server_data.*.private_ip}"
+  value       = aws_network_interface.server_data.*.private_ip
 }
