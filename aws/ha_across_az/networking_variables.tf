@@ -33,17 +33,17 @@ variable "vpc_cidr_block" {
 
 variable "management_subnet_cidr_blocks" {
   description = "The CIDR blocks that will be used for the management subnet. Must be contained inside the VPC cidr block."
-  type        = "list"
+  type        = list(string)
 }
 
 variable "client_subnet_cidr_blocks" {
   description = "The CIDR blocks that will be used for the client subnet. Must be contained inside the VPC cidr block."
-  type        = "list"
+  type        = list(string)
 }
 
 variable "server_subnet_cidr_blocks" {
   description = "The CIDR blocks that will be used for the server subnet. Must be contained inside the VPC cidr block."
-  type        = "list"
+  type        = list(string)
 }
 
 variable "controlling_subnet" {

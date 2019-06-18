@@ -68,24 +68,24 @@ variable "management_security_group_id" {
 
 variable "management_subnet_ids" {
   description = "Subnets for the management interfaces."
-  type = "list"
+  type        = list(string)
 }
 
 variable "server_security_group_id" {
   description = "Security group id for the server interfaces."
 }
 
-variable "server_subnet_ids" { 
+variable "server_subnet_ids" {
   description = "Subnet ids for the server interfaces."
-  type = "list" 
+  type        = list(string)
 }
 
 variable "lbvserver_name" {
   description = "Name of the lb vserver."
-  default = "vserver1"
+  default     = "vserver1"
 }
 
 variable "server_subnets_cidr_block" {
   description = "Server subnet cidr blocks."
-  type = "list"
+  type        = list(string)
 }

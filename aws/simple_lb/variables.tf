@@ -61,9 +61,11 @@ variable "vip" {
   description = "The VIP address of the primary node."
 }
 
-variable "client_subnet_id" {}
+variable "client_subnet_id" {
+}
 
-variable "management_subnet_id" {}
+variable "management_subnet_id" {
+}
 
 # Services configuration
 variable "count" {
@@ -71,6 +73,11 @@ variable "count" {
   default     = 2
 }
 
-variable "management_security_group_id" {}
-variable "server_security_group_id" {}
-variable "server_subnet_id" {}
+variable "management_security_group_id" {
+}
+
+variable "server_security_group_id" {
+}
+
+variable "server_subnet_id" {
+}
