@@ -45,7 +45,7 @@ Create an ssh key pair to access the created VPX instances over SSH.
 
 #### Configuration files
 
-* ssh\_key.tf 
+* ssh\_key.tf
 * ssh\_key\_variables.tf
 
 #### Input Variables
@@ -176,9 +176,9 @@ On primary node, (aws\_instance at index 0)
 save config
 ```
 
-#### Configuration files 
+#### Configuration files
 
-* citrix\_adc\_ha\_setup.tf 
+* citrix\_adc\_ha\_setup.tf
 * citrix\_adc\_ha\_setup\_variables.tf
 * setup\_ha\_nitro.sh
 

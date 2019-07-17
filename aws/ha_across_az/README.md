@@ -45,7 +45,7 @@ Create an ssh key pair to access the created VPX instances over SSH.
 
 #### Configuration files
 
-* ssh\_key.tf 
+* ssh\_key.tf
 * ssh\_key\_variables.tf
 
 #### Input Variables
@@ -201,9 +201,9 @@ interface to the secondary node's client interface.
 
 Notice that backend services setup is not part of this configuration script.
 
-#### Configuration files 
+#### Configuration files
 
-* citrix\_adc\_ha\_setup.tf 
+* citrix\_adc\_ha\_setup.tf
 * citrix\_adc\_ha\_setup\_variables.tf
 * setup\_ha\_pair.sh
 

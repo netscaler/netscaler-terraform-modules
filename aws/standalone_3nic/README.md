@@ -2,7 +2,7 @@
 
 This folder contains the configuration scripts to deploy
 * A VPC with 3 subnets and associated security groups and routing tables.
-* A single Citrix ADC instance with 3 NICs.  
+* A single Citrix ADC instance with 3 NICs.
 * An SSH keypair to manage ssh access to the Citrix ADC instance.
 
 
@@ -11,7 +11,7 @@ This folder contains the configuration scripts to deploy
 The VPC is configured to have a single subnet which is then
 divided into three blocks for use in each of the Citrix ADC NICs.
 
-The configuration for the VPC and networking components 
+The configuration for the VPC and networking components
 is contained in the following files
 
 * `networking.tf`: configuration for all networking components.
