@@ -6,7 +6,7 @@ deployment on cloud services, such as AWS and Azure.
 The intent is to be utilized as starting points for a more custom configuration
 that will match the user's needs.
 
-## Supported terrafrom versions
+## Supported terraform versions
 
 The terraform scripts follow the configuration syntax of terraform 0.12.
 Note that terraform version 0.12 introduced changes to the configuration syntax
