@@ -28,7 +28,7 @@
 ########################################################################################
 
 resource "aws_instance" "ubuntu" {
-  ami           = "ami-0883141bc92a74917"
+  ami           = var.ubuntu_ami_map[var.aws_region]
   instance_type = "t2.micro"
   key_name      = "georgen"
 
