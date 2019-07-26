@@ -48,7 +48,7 @@ curl \
 https://$1/nitro/v1/config/nsconfig?action=save
 }
 
-sleep 5
+sleep 60
 
 add_ha_node $PRIMARY_NODE_PUBLIC_NSIP $PRIMARY_NODE_INSTANCE_ID $SECONDARY_NODE_PRIVATE_NSIP
 
