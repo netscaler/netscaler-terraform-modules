@@ -27,7 +27,7 @@
 #
 ########################################################################################
 output "nsip" {
-  value = aws_instance.citrix_adc.public_ip
+  value = aws_eip.nsip.public_ip
 }
 
 output "client_ip" {

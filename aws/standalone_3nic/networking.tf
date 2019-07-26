@@ -129,7 +129,7 @@ resource "aws_security_group" "management" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["185.25.64.249/32"]
+    cidr_blocks = concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
   }
 
   egress {

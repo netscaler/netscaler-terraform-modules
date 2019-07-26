@@ -68,7 +68,7 @@ variable "management_subnet_id" {
 }
 
 # Services configuration
-variable "count" {
+variable "backend_services_count" {
   description = "The count of backend services"
   default     = 2
 }
@@ -80,4 +80,8 @@ variable "server_security_group_id" {
 }
 
 variable "server_subnet_id" {
+}
+
+variable "ubuntu_ami_map" {
+    type = map(string)
 }
