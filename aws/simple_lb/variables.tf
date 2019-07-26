@@ -81,3 +81,7 @@ variable "server_security_group_id" {
 
 variable "server_subnet_id" {
 }
+
+variable "ubuntu_ami_map" {
+    type = map(string)
+}
