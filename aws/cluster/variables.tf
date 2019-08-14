@@ -2,46 +2,35 @@
 variable "aws_access_key" {
   description = "The AWS access key"
 }
-
 variable "aws_secret_key" {
   description = "The AWS secret key"
 }
-
 variable "ssh_pub_key" {
   description = "The public part of the SSH key you will use to access EC2 instances"
 }
-
 variable "aws_region" {
   description = "The AWS region to create things in"
   default     = "us-east-1"
 }
-
 variable "aws_availability_zone" {
   description = "Availability zone to create things in"
   default     = "us-east-1a"
 }
-
 variable "key_pair_name" {
   description = "SSH key name stored on AWS EC2 to access EC2 instances"
 }
-
-
 variable "vpc_cidr_block" {
   description = "The CIDR block that will be used for all needed subnets"
 }
-
 variable "management_subnet_cidr_block" {
   description = "The CIDR block that will be used for the management subnet. Must be contained inside the VPC cidr block."
 }
-
 variable "client_subnet_cidr_block" {
   description = "The CIDR block that will be used for the client subnet. Must be contained inside the VPC cidr block."
 }
-
 variable "server_subnet_cidr_block" {
   description = "The CIDR block that will be used for the server subnet. Must be contained inside the VPC cidr block."
 }
-
 variable "controlling_subnet" {
   description = "The CIDR block of the machines that will SSH into the NSIPs of the VPX HA pair."
 }
@@ -76,12 +65,10 @@ EOF
 */
   }
 }
-
 variable "ns_tenancy_model" {
   description = "Tenancy Type of Citrix ADC Instance"
   default     = "default"
 }
-
 variable "ns_instance_type" {
   description = <<EOF
 EC2 instance type.
