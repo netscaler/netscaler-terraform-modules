@@ -1,0 +1,14 @@
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# VSCode
+.vscode
+
+#
+plan
+
+# TFVars
+*.tfvars
