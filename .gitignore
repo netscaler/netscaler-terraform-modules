@@ -12,3 +12,6 @@ plan
 
 # TFVars
 *.tfvars
+
+# Temp directory
+temp
