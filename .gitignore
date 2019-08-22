@@ -1,0 +1,22 @@
+    
+#  Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars
+
+# VSCode IDE
+.vscode
+
+#
+plan
+
+# TFVars
+*.tfvars
+
+# Temp directory, if any
+temp
