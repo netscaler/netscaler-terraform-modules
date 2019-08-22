@@ -205,10 +205,10 @@ resource "aws_instance" "citrix_adc" {
 }
 
 resource "aws_network_interface" "management" {
-  count           = var.initial_num_nodes
-  subnet_id       = aws_subnet.management.id
-  security_groups = [aws_security_group.management.id]
-  private_ips_count = 1 #TODO: add this secondary private IP only to one instance. not all
+  count             = var.initial_num_nodes
+  subnet_id         = aws_subnet.management.id
+  security_groups   = [aws_security_group.management.id]
+  private_ips_count = count.index == 0 ? 1 : 0 # Create secondary IPs only for the 1st node. This secondary IP acts as Cluster IP
 
   tags = {
     Name        = format("Terraform NS Management interface %v", count.index)
