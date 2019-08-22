@@ -33,19 +33,19 @@ output "server_aws_security_group_id" {
 
 # Citrix related outputs
 output "citrix_adc_aws_intance_id" {
-  value = aws_instance.citrix_adc.id
+  value = aws_instance.citrix_adc.*.id
 }
 
 output "nsip_aws_eip_public_ip" {
-  value = aws_eip.nsip.public_ip
+  value = aws_eip.nsip.*.public_ip
 }
 
 output "client_aws_eip_public_ip" {
-  value = aws_eip.client.public_ip
+  value = aws_eip.client.*.public_ip
 }
 
 output "client_aws_eip_private_ip" {
-  value = aws_eip.client.private_ip
+  value = aws_eip.client.*.private_ip
 }
 
 # output "management_aws_network_interface_private_ips" {
@@ -53,5 +53,5 @@ output "client_aws_eip_private_ip" {
 # }
 
 output "server_aws_network_interface_private_ip" {
-  value = aws_network_interface.server.private_ip
+  value = aws_network_interface.server.*.private_ip
 }

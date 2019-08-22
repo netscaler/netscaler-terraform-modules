@@ -35,7 +35,12 @@ variable "controlling_subnet" {
   description = "The CIDR block of the machines that will SSH into the NSIPs of the VPX HA pair."
 }
 
+
 # Citrix related variables
+variable "initial_num_nodes" {
+  description = "Initial number of nodes in the cluster"
+  default     = 1
+}
 variable "vpx_ami_map" {
   description = <<EOF
 

@@ -188,83 +188,91 @@ resource "aws_security_group" "server" {
 
 # Citrix related resources
 resource "aws_instance" "citrix_adc" {
+  count         = var.initial_num_nodes
   ami           = var.vpx_ami_map[var.aws_region]
   instance_type = var.ns_instance_type
   key_name      = var.key_pair_name
   tenancy       = var.ns_tenancy_model
 
   network_interface {
-    network_interface_id = aws_network_interface.management.id
+    network_interface_id = element(aws_network_interface.management.*.id, count.index)
     device_index         = 0
   }
 
   tags = {
-    Name = "Terraform Citrix ADC"
+    Name = format("Citrix ADC Node %v", count.index)
   }
 }
 
 resource "aws_network_interface" "management" {
+  count           = var.initial_num_nodes
   subnet_id       = aws_subnet.management.id
   security_groups = [aws_security_group.management.id]
-  # private_ips_count = 1
+  private_ips_count = 1 #TODO: add this secondary private IP only to one instance. not all
 
   tags = {
-    Name        = "Terraform NS Management interface"
-    Description = "MGMT Interface for Citrix ADC"
+    Name        = format("Terraform NS Management interface %v", count.index)
+    Description = format("MGMT Interface for Citrix ADC %v", count.index)
   }
 }
 
 resource "aws_network_interface" "client" {
+  count           = var.initial_num_nodes
   subnet_id       = aws_subnet.client.id
   security_groups = [aws_security_group.client.id]
 
   attachment {
-    instance     = aws_instance.citrix_adc.id
+    instance     = element(aws_instance.citrix_adc.*.id, count.index)
     device_index = 1
   }
 
   tags = {
-    Name        = "Terraform NS External Interface"
-    Description = "External Interface for Citrix ADC"
+    Name        = format("Terraform NS External Interface %v", count.index)
+    Description = format("External Interface for Citrix ADC %v", count.index)
   }
+
 }
 
 resource "aws_network_interface" "server" {
+  count           = var.initial_num_nodes
   subnet_id       = aws_subnet.server.id
   security_groups = [aws_security_group.server.id]
 
   attachment {
-    instance     = aws_instance.citrix_adc.id
+    instance     = element(aws_instance.citrix_adc.*.id, count.index)
     device_index = 2
   }
 
   tags = {
-    Name        = "Terraform NS Internal Interface"
-    Description = "Internal Interface for Citrix ADC"
+    Name        = format("Terraform NS Internal Interface %v", count.index)
+    Description = format("Internal Interface for Citrix ADC %v", count.index)
   }
+
 }
 
 resource "aws_eip" "nsip" {
+  count             = var.initial_num_nodes
   vpc               = true
-  network_interface = aws_network_interface.management.id
+  network_interface = element(aws_network_interface.management.*.id, count.index)
 
   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
   depends_on = [aws_instance.citrix_adc]
 
   tags = {
-    Name = "Terraform Public NSIP"
+    Name = format("Terraform Public NSIP %v", count.index)
   }
 }
 
 resource "aws_eip" "client" {
+  count             = var.initial_num_nodes
   vpc               = true
-  network_interface = aws_network_interface.client.id
+  network_interface = element(aws_network_interface.client.*.id, count.index)
 
   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
   depends_on = [aws_instance.citrix_adc]
 
   tags = {
-    Name = "Terraform Public Data IP"
+    Name = format("Terraform Public Data IP %v", count.index)
   }
 }
 
