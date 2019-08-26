@@ -191,11 +191,10 @@ resource "aws_instance" "test-ubuntu" {
   instance_type               = "t2.micro"
   key_name                    = var.key_pair_name
   subnet_id                   = aws_subnet.management.id
-  associate_public_ip_address = true
   security_groups   = [aws_security_group.management.id]
 
   tags = {
-    Name = format("test-ubuntu")
+    Name = "test-ubuntu"
   }
 }
 

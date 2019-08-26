@@ -331,6 +331,9 @@ def check_cluster_status():
         return False
 
     result = cc.do_get(resource='clusternode')
+    # check each cluster node's Health, Operational State. Wait for MAX_RETRIES and exit if not ACTIVE
+    # Health - UP, INIT
+    # Operational State - ACTIVE, INACTIVE
 
     # As of now, validation is only number of nodes
     if len(NODES) == len(result["clusternode"]):
@@ -396,55 +399,17 @@ def add_rest_nodes_to_cluster(rest_nodes):
 
 
 if __name__ == "__main__":
-    # input_data = yaml.load(open("cluster-input.yaml"))
-    # logger.debug(json.dumps(input_data, indent=4))
-    # for key, value in input_data.items():
-    #     if key == 'CLUSTER_IP':
-    #         CLIP = value
-    #     elif key == 'NODES':
-    #         NODES = value
-    #     else:
-    #         logger.error(
-    #             'Input Error: Unknown key {} in input file'.format(key))
-    #         exit()
-
-    input_data = json.load(open('cluster-input.json'))
-    primary_nsips = []
-    all_nsips = []
-    all_instIDs = []
+    input_data = yaml.load(open("cluster-input.yaml"))
+    logger.debug(json.dumps(input_data, indent=4))
     for key, value in input_data.items():
-        if key == 'management_aws_netowrk_interface_private_ip':
-            primary_nsips = value['value']
-        elif key == 'management_aws_network_interface_private_ips':
-            all_nsips = value['value']
-        elif key == 'citrix_adc_aws_intance_id':
-            all_instIDs = value['value']
-
-    first_node_private_nsips = all_nsips[0]
-    CLIP = list(set(first_node_private_nsips) - set(primary_nsips))[0]
-    logger.info('CLIP is {}'.format(CLIP))
-
-    # change the password to 'nsroot'
-    for n in range(len(primary_nsips)):
-        node = {}
-        node['ID'] = n
-        node['NSIP'] = primary_nsips[n]
-        NODES.append(node)
-
-        # TODO: remove this code
-        # change password
-        nodeObj = CitrixADC(primary_nsips[n], nspass=all_instIDs[n])
-        nodeObj.change_password(new_pass='nsroot')
-        nodeObj.save_config()
-        nodeObj = None
-    logger.info('Nodes to be added to cluster: {}'.format(NODES))
-
-
-    #check if CLIP is reachable
-    # if rechable
-        # chcek cluster status and nodes
-        # if a node in input_data present in already present cluster, skip
-        # else
+        if key == 'CLUSTER_IP':
+            CLIP = value
+        elif key == 'NODES':
+            NODES = value
+        else:
+            logger.error(
+                'Input Error: Unknown key {} in input file'.format(key))
+            exit()
 
     current_node_dict = get_current_cluster_nodes()
     if current_node_dict:
@@ -484,7 +449,7 @@ if __name__ == "__main__":
             for nodeID in node_ids_to_delete:
                 cc.remove_cluster_node(nodeID)
                 cc.save_config()
-            cc.reboot()
+            # cc.reboot()
 
     else:
         # CLIP not reacbale. Create new cluster
