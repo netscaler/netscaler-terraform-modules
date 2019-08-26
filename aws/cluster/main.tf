@@ -185,6 +185,19 @@ resource "aws_security_group" "server" {
   }
 }
 
+#TODO: Remove this code
+resource "aws_instance" "test-ubuntu" {
+  ami                         = "ami-0aa7cf8bea71c424f"
+  instance_type               = "t2.micro"
+  key_name                    = var.key_pair_name
+  subnet_id                   = aws_subnet.management.id
+  associate_public_ip_address = true
+  security_groups   = [aws_security_group.management.id]
+
+  tags = {
+    Name = format("test-ubuntu")
+  }
+}
 
 # Citrix related resources
 resource "aws_instance" "citrix_adc" {
@@ -199,10 +212,79 @@ resource "aws_instance" "citrix_adc" {
     device_index         = 0
   }
 
+  iam_instance_profile = aws_iam_instance_profile.citrix_adc_cluster_instance_profile.name
+
   tags = {
     Name = format("Citrix ADC Node %v", count.index)
   }
 }
+
+resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
+  name = "citrix_adc_cluster_policy"
+  role = aws_iam_role.citrix_adc_cluster_role.name
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ec2:DescribeAddresses",
+        "ec2:AssociateAddress",
+        "ec2:DisassociateAddress",
+        "ec2:DescribeInstances",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DetachNetworkInterface",
+        "ec2:AttachNetworkInterface",
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "ec2:RebootInstances",
+        "autoscaling:*",
+        "sns:*",
+        "sqs:*",
+        "iam:GetRole",
+        "iam:SimulatePrincipalPolicy"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+
+}
+
+resource "aws_iam_role" "citrix_adc_cluster_role" {
+  name = "citrix_adc_cluster_role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "sts:AssumeRole"
+      ],
+      "Effect": "Allow",
+      "Principal": {
+        "Service": [
+          "ec2.amazonaws.com"
+        ]
+      }
+    }
+  ]
+}
+EOF
+
+}
+
+resource "aws_iam_instance_profile" "citrix_adc_cluster_instance_profile" {
+  name = "citrix_adc_cluster_instance_profile"
+  path = "/"
+  role = aws_iam_role.citrix_adc_cluster_role.name
+}
+
 
 resource "aws_network_interface" "management" {
   count             = var.initial_num_nodes
@@ -212,7 +294,7 @@ resource "aws_network_interface" "management" {
 
   tags = {
     Name        = format("Terraform NS Management interface %v", count.index)
-    Description = format("MGMT Interface for Citrix ADC %v", count.index)
+    Description = format("Management Interface for Citrix ADC %v", count.index)
   }
 }
 
@@ -227,8 +309,8 @@ resource "aws_network_interface" "client" {
   }
 
   tags = {
-    Name        = format("Terraform NS External Interface %v", count.index)
-    Description = format("External Interface for Citrix ADC %v", count.index)
+    Name        = format("Terraform NS Client Interface %v", count.index)
+    Description = format("Client Interface for Citrix ADC %v", count.index)
   }
 
 }
@@ -244,37 +326,37 @@ resource "aws_network_interface" "server" {
   }
 
   tags = {
-    Name        = format("Terraform NS Internal Interface %v", count.index)
-    Description = format("Internal Interface for Citrix ADC %v", count.index)
+    Name        = format("Terraform NS Server Interface %v", count.index)
+    Description = format("Server Interface for Citrix ADC %v", count.index)
   }
 
 }
 
-resource "aws_eip" "nsip" {
-  count             = var.initial_num_nodes
-  vpc               = true
-  network_interface = element(aws_network_interface.management.*.id, count.index)
+# resource "aws_eip" "nsip" {
+#   count             = var.initial_num_nodes
+#   vpc               = true
+#   network_interface = element(aws_network_interface.management.*.id, count.index)
 
-  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
-  depends_on = [aws_instance.citrix_adc]
+#   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
+#   depends_on = [aws_instance.citrix_adc]
 
-  tags = {
-    Name = format("Terraform Public NSIP %v", count.index)
-  }
-}
+#   tags = {
+#     Name = format("Terraform Public NSIP %v", count.index)
+#   }
+# }
 
-resource "aws_eip" "client" {
-  count             = var.initial_num_nodes
-  vpc               = true
-  network_interface = element(aws_network_interface.client.*.id, count.index)
+# resource "aws_eip" "client" {
+#   count             = var.initial_num_nodes
+#   vpc               = true
+#   network_interface = element(aws_network_interface.client.*.id, count.index)
 
-  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
-  depends_on = [aws_instance.citrix_adc]
+#   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
+#   depends_on = [aws_instance.citrix_adc]
 
-  tags = {
-    Name = format("Terraform Public Data IP %v", count.index)
-  }
-}
+#   tags = {
+#     Name = format("Terraform Public Data IP %v", count.index)
+#   }
+# }
 
 
 # # Null resource

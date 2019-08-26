@@ -1,6 +1,8 @@
-import requests
 import json
 import logging
+import yaml
+import time
+import requests
 
 #from ansible.module_utils.six.moves.urllib.parse import parse_qs, urlencode, quote
 LOGFILE = __file__ + '.log'
@@ -20,9 +22,12 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
-# logger.debug(json.dumps(response, indent=4))
+# Global Variables
+CLIP = ""
+NODES = []
 
-def waitfor(seconds, reason=None):
+
+def waitfor(seconds=5, reason=None):
     if reason != None:
         logger.info(
             'Waiting for {} seconds. Reason: {}'.format(seconds, reason))
@@ -31,108 +36,24 @@ def waitfor(seconds, reason=None):
     time.sleep(seconds)
 
 
-class CitrixADCNitro(object):
-    login_ip = ""
-    username = "nsroot"
-    password = ""
-    private_nsip = ""
-    private_vip = ""
-    private_snip = ""
-    # sessid = None
-    nitro_protocol = 'http'
-    api_path = 'nitro/v1/config'
-
-    def __init__(self, login_ip, login_user, login_pass, **kwargs):
-        self.login_ip = login_ip
-        self.username = login_user
-        self.password = login_pass
-
-        for key, value in kwargs.items():
-            if key == "private_nsip":
-                self.private_nsip = value
-            elif key == "private_vip":
-                self.private_vip = value
-            elif key == "private_nsip":
-                self.private_snip = value
-            elif key == "nitro_protocol":
-                self.nitro_protocol = value
-            elif key == "api_path":
-                self.api_path = value
-            else:
-                logger.error("unexpected argument {}".format(key))
+class HTTPNitro():
+    def __init__(self, nsip, nsuser='nsroot', nspass='nsroot', nitro_protocol='http', ns_api_path='nitro/v1/config'):
+        self.nitro_protocol = nitro_protocol
+        self.api_path = ns_api_path
+        self.nsip = nsip
+        self.nsuser = nsuser
+        self.nspass = nspass
 
         self.headers = {}
         self.headers['Content-Type'] = 'application/json'
-        self.headers['X-NITRO-USER'] = self.username
-        self.headers['X-NITRO-PASS'] = self.password
+        self.headers['X-NITRO-USER'] = self.nsuser
+        self.headers['X-NITRO-PASS'] = self.nspass
 
-        if not self.check_connection():
-            exit()
-
-    def check_connection(self):
+    def construct_url(self, resource,  id=None, action=None):
         # Construct basic get url
         url = '%s://%s/%s/%s' % (
             self.nitro_protocol,
-            self.login_ip,
-            self.api_path,
-            "login",
-        )
-        headers = {}
-        headers['Content-Type'] = 'application/json'
-        # headers['X-NITRO-USER'] = 'nsroot'
-        # headers['X-NITRO-PASS'] = 'nsroot'
-        payload = {
-            "login": {
-                "username": self.username,
-                "password": self.password
-            }
-        }
-        r = requests.post(url=url, headers=headers, json=payload)
-
-        #r = requests.post(url=url,headers=self.headers,data='object=%s' % json.dumps(payload))
-        # print(r.text)
-        response = r.json()
-        logger.debug("do_login response: {}".format(
-            json.dumps(response, indent=4)))
-        if response['severity'] == 'ERROR':
-            logging.error('Could not login to {}'.format(self.login_ip))
-            logging.error('{}: {}'.format(
-                response['errorcode'], response['message']))
-            return False
-        return True
-        #sessionid = login['login'][0]['sessionid']
-        # self.sessid = response['sessionid']
-
-    def do_get(self, resource, id=None):
-        # url = self.static_url + resource
-
-        # Construct basic get url
-        url = '%s://%s/%s/%s' % (
-            self.nitro_protocol,
-            self.login_ip,
-            self.api_path,
-            resource,
-        )
-
-        # Append resource id
-        if id is not None:
-            url = '%s/%s' % (url, id)
-
-        r = requests.get(
-            url=url,
-            headers=self.headers,
-            verify=False,
-        )
-        response = r.json()
-        logger.debug("do_get response: {}".format(
-            json.dumps(response, indent=4)))
-        return response
-
-    def do_post(self, resource, data, action=None, id=None):
-        # Construct basic get url
-        url = '%s://%s/%s/%s' % (
-            self.nitro_protocol,
-            self.login_ip,
+            self.nsip,
             self.api_path,
             resource,
         )
@@ -145,149 +66,440 @@ class CitrixADCNitro(object):
         if action is not None:
             url = '%s?action=%s' % (url, action)
 
+        return url
+
+    def check_connection(self):
+        url = self.construct_url(resource='login')
+
+        headers = {}
+        headers['Content-Type'] = 'application/json'
+        payload = {
+            "login": {
+                "username": self.nsuser,
+                "password": self.nspass
+            }
+        }
+        try:
+            r = requests.post(url=url, headers=headers, json=payload)
+            response = r.json()
+            logger.debug("do_login response: {}".format(
+                json.dumps(response, indent=4)))
+            if response['severity'] == 'ERROR':
+                logging.error('Could not login to {}'.format(self.login_ip))
+                logging.error('{}: {}'.format(
+                    response['errorcode'], response['message']))
+                return False
+            return True
+        except Exception as e:
+            logger.error('Exception @ check_connection: {}'.format(str(e)))
+            return False
+
+    def do_get(self, resource, id=None, action=None):
+        url = self.construct_url(resource, id, action)
+
+        logging.debug('url: {}'.format(url))
+        r = requests.get(
+            url=url,
+            headers=self.headers,
+            verify=False,
+        )
+        waitfor()
+        if r.status_code == 200:
+            response = r.json()
+            logger.debug("do_get response: {}".format(
+                json.dumps(response, indent=4)))
+            return response
+        else:
+            logger.error('GET failed: {}'.format(r.text))
+            return False
+
+    def do_post(self, resource, data, id=None, action=None):
+        url = self.construct_url(resource, id, action)
+
         r = requests.post(
             url=url,
             headers=self.headers,
             json=data,
         )
         # print(r.text)
-        # print(r.status_code)
-        response = r.json()
-        logger.debug("do_post response: {}".format(
-            json.dumps(response, indent=4)))
-        return response
+        logger.info(r.status_code)
+        waitfor()
+        if r.status_code == 201 or r.status_code == 200:
+            return True
+        else:
+            logger.error('POST failed: {}'.format(r.text))
+            return False
 
-    def do_put(self, resource, data, id=None):
-        # Construct basic get url
-        url = '%s://%s/%s/%s' % (
-            self.nitro_protocol,
-            self.login_ip,
-            self.api_path,
-            resource,
-        )
-
-        # Append resource id
-        if id is not None:
-            url = '%s/%s' % (url, id)
+    def do_put(self, resource, data, id=None, action=None):
+        url = self.construct_url(resource, id, action)
 
         r = requests.put(
             url=url,
             headers=self.headers,
             json=data,
         )
-        response = r.json()
-        logger.debug("do_put response: {}".format(
-            json.dumps(response, indent=4)))
-        return response
+        waitfor()
+        if r.status_code == 201 or r.status_code == 200:
+            return True
+        else:
+            logger.error('PUT failed: {}'.format(r.text))
+            return False
 
-    def do_delete(self, url):
-       # Construct basic get url
-        url = '%s://%s/%s/%s' % (
-            self.nitro_protocol,
-            self.login_ip,
-            self.api_path,
-            resource,
-        )
-
-        # Append resource id
-        if id is not None:
-            url = '%s/%s' % (url, id)
+    def do_delete(self, resource, id=None, action=None):
+        url = self.construct_url(resource, id, action)
 
         r = requests.delete(
             url=url,
             headers=self.headers,
         )
-        response = r.json()
-        logger.debug("do_delete response: {}".format(
-            json.dumps(response, indent=4)))
-        return response
+        waitfor()
+        if r.status_code == 200:
+            return True
+        else:
+            return False
 
 
-def add_cluster_instance(adc, instID):
-    data = {"clusterinstance": {
-        "clid": instID,
-    }}
-    result = adc.post(resource='nslicenseserver',
-                      data=data)
+class CitrixADC(HTTPNitro):
+    def __init__(self, nsip, nsuser='nsroot', nspass='nsroot'):
+        super().__init__(nsip=nsip, nsuser=nsuser, nspass=nspass)
 
+    def add_cluster_instance(self, instID):
+        data = {"clusterinstance": {
+            "clid": str(instID),
+        }}
+        result = self.do_post(resource='clusterinstance',
+                                 data=data)
+        if result:
+            logger.info('Successfully added cluster instance {} to {}'.format(instID, self.nsip))
+        else:
+            logger.error('Could not add cluster instance {} to {}'.format(instID, self.nsip))
+            logger.error('Refer log file for more information')
+            raise Exception
 
-def enable_cluster_instance(adc, instID):
-    data = {"clusterinstance": {
-        "clid": instID,
-    }}
-    result = adc.post(resource='nslicenseserver',
-                      data=data, action="enable")
+    def enable_cluster_instance(self, instID):
+        data = {"clusterinstance": {
+            "clid": str(instID),
+        }}
+        result = self.do_post(resource='clusterinstance',
+                                 data=data, action="enable")
+        if result:
+            logger.info('Successfully enabled cluster instance {} to {}'.format(instID, self.nsip))
+        else:
+            logger.error('Could not enabled cluster instance {} to {}'.format(instID, self.nsip))
+            logger.error('Refer log file for more information')
+            raise Exception
 
+    def add_cluster_node(self, nodeID, nodeIP, backplane, tunnelmode, state):
+        data = {"clusternode": {
+            "nodeid": str(nodeID),
+            "ipaddress": nodeIP,
+            "state": state,
+            "backplane": backplane,
+            "tunnelmode": tunnelmode
+        }}
+        result = self.do_post(resource='clusternode',
+                                 data=data)
+        if result:
+            logger.info('Successfully added cluster node with ID:{} and nodeIP:{}'.format(nodeID, nodeIP))
+        else:
+            logger.error('Could not add cluster node with ID:{} and nodeIP:{}'.format(nodeID, nodeIP))
+            logger.error('Refer log file for more information')
+            raise Exception
 
-def add_cluster_node(adc, nodeID, nodeIP, backplane, tunnelmode, state):
-    data = {"clusternode": {
-        "nodeid": nodeID,
-        "ipaddress": nodeIP,
-        "state": state,
-        "backplane": backplane,
-        "tunnelmode": tunnelmode
-    }}
-    result = adc.post(resource='clusternode',
-                      data=data, action="enable")
+    def set_cluster_node(self, nodeID, state):
+        data = {"clusternode": {
+            "nodeid": str(nodeID),
+            "state": state,
+        }}
+        result = self.do_put(resource='clusternode',
+                                data=data)
+        if result:
+            logger.info('Successfully set cluster node {} to state {}'.format(nodeID, state))
+        else:
+            logger.error('Could not add cluster node {} to state {}'.format(nodeID, state))
+            logger.error('Refer log file for more information')
+            raise Exception
 
+    def remove_cluster_node(self, nodeID):
+        result = self.do_delete(resource='clusternode',
+                                   id=str(nodeID))
+        if result:
+            logger.info('Successfully removed cluster node {}'.format(nodeID))
+        else:
+            logger.error('Could not remove cluster node {}'.format(nodeID))
+            logger.error('Refer log file for more information')
+            raise Exception
 
-def set_cluster_node(adc, nodeID, state):
-    data = {"clusternode": {
-        "nodeid": nodeID,
-        "state": state,
-    }}
-    result = adc.put(resource='clusternode',
-                     data=data)
+    def join_cluster(self, clip, password):
+        data = {"cluster": {
+            "clip": clip,
+            "password": password
+        }}
+        result = self.do_post(resource='cluster',
+                                 data=data, action="join")
+        if result:
+            logger.info('Successfully joined cluster node {}'.format(self.nsip))
+        else:
+            logger.error('Could not join cluster node {}'.format(self.nsip))
+            logger.error('Refer log file for more information')
+            raise Exception
 
+    def add_nsip(self, ip, netmask, ip_type):
+        data = {"nsip": {
+            "ipaddress": ip,
+            "netmask": netmask,
+            "type": ip_type
+        }}
+        result = self.do_post(resource='nsip',
+                                 data=data)
+        if result:
+            logger.info('Successfully added NSIP {} with type {}'.format(ip, ip_type))
+        else:
+            logger.error('Could not add NSIP {} with type {}'.format(ip, ip_type))
+            logger.error('Refer log file for more information')
+            raise Exception
 
-def remove_cluster_node(nodeID):
-    result = adc.delete(resource='clusternode',
-                        id=nodeID)
-
-
-def join_cluster(adc, clip, password):
-    data = {"cluster": {
-        "clip": clip,
-        "password": password
-    }}
-    result = adc.post(resource='cluster',
-                      data=data, action="join")
-
-
-def add_nsip(adc, ip, netmask, ip_type):
-    data = {"nsip": {
-        "ipaddress": ip,
-        "netmask": netmask,
-        "type": ip_type
-    }}
-    result = adc.post(resource='nsip',
-                      data=data)
-
-
-def save_config(adc):
-    data = {
-        'nsconfig': {}
-    }
-    result = adc.post(resource='nsconfig',
-                      data=data, action="save")
-
-
-def reboot(adc, warm=True):
-    data = {
-        "reboot": {
-            "warm": warm
+    def save_config(self):
+        data = {
+            'nsconfig': {}
         }
-    }
-    result = adc.post(resource='reboot',
-                      data=data)
+        result = self.do_post(resource='nsconfig',
+                                 data=data, action="save")
+        if result:
+            logger.info('Successfully saved nsconfig of {}'.format(self.nsip))
+        else:
+            logger.error('Could not save nsconfig of {}'.format(self.nsip))
+            logger.error('Refer log file for more information')
+            raise Exception
+
+    def reboot(self, warm=True):
+        data = {
+            "reboot": {
+                "warm": warm
+            }
+        }
+        result = self.do_post(resource='reboot',
+                                 data=data)
+        if result:
+            logger.info('Successfully reboot {}'.format(self.nsip))
+        else:
+            logger.error('Could not reboot {}'.format(self.nsip))
+            logger.error('Refer log file for more information')
+            raise Exception
+
+    def change_password(self, nsuser='nsroot', new_pass='nsroot'):
+        # check for new_pass already updated
+        pass_bck = self.nspass
+        self.nspass = new_pass
+        if self.check_connection():
+            logger.info('Password already changed to {}'.format(new_pass))
+            self.headers['X-NITRO-PASS'] = self.nspass
+            return True
+        else:
+            data = {"systemuser": {
+                "username": nsuser,
+                "password": new_pass,
+            }}
+            result = self.do_put(resource='systemuser',
+                                    data=data)
+
+            #TODO: change password does not return proper return code by NitroAPI. might be a bug in NitroAPI
+            if result:
+                self.nspass = new_pass
+                self.headers['X-NITRO-PASS'] = self.nspass
+                logger.info('Successfully changed password of {} to {}'.format(self.nsip, new_pass))
+                return True
+            else:
+                logger.error('Could not change password of {} to {}'.format(self.nsip, new_pass))
+                logger.error('Refer log file for more information')
+                raise Exception
 
 
-def check_cluster_status(adc):
-    result = adc.do_get(resource='clusterinstance')
-    # check validation on "operationalpropstate"
-    return True
+def get_current_cluster_nodes():
+    cc = CitrixADC(CLIP)
+    if not cc.check_connection():
+        return False
+
+    result = cc.do_get(resource='clusternode')
+    return result['clusternode']
+
+def check_cluster_status():
+    # Before calling this function, CLIP should already been established
+    # login to cluster and check the status
+    cc = CitrixADC(CLIP)
+    if not cc.check_connection():
+        return False
+
+    result = cc.do_get(resource='clusternode')
+
+    # As of now, validation is only number of nodes
+    if len(NODES) == len(result["clusternode"]):
+        return True
+    else:
+        return False
 
 
-adc = CitrixADCNitro(login_ip='13.232.101.111',
-                     login_user='nsroot', login_pass='nsroot')
-check_cluster_status(adc)
+def add_first_node_to_cluster(n):
+    nsip = n['NSIP']
+    nodeID = n['ID']
+    backplane = '{}/1/1'.format(nodeID)
+    tunnelmode = 'GRE'
+    state = 'ACTIVE'
+    clusterInstanceID = 1  # Assumption
+
+    node = CitrixADC(nsip)
+    if not node.check_connection():
+        logging.error('Node {} not reachable'.format(nsip))
+        exit()
+    node.add_cluster_instance(clusterInstanceID)
+    node.add_cluster_node(nodeID, nsip, backplane, tunnelmode, state)
+    node.add_nsip(CLIP, '255.255.255.255', 'CLIP')
+    node.enable_cluster_instance(clusterInstanceID)
+    node.save_config()
+    node.reboot()
+    waitfor(300, reason='waiting for the node to add to the cluster')
+    # TODO: check the state
+    # check_cluster_status()
+
+
+def add_rest_nodes_to_cluster(rest_nodes):
+    # for every node
+        # login to CLIP, add node
+        # login to node, join CLIP
+    for n in rest_nodes:
+        nsip = n['NSIP']
+        nodeID = n['ID']
+        backplane = '{}/1/1'.format(nodeID)
+        tunnelmode = 'GRE'
+        state = 'ACTIVE'
+
+        # Connect to Cluster Coordinator
+        cc = CitrixADC(CLIP)
+        if not cc.check_connection():
+            logging.error('Node {} not reachable'.format(nsip))
+            exit()
+
+        cc.add_cluster_node(nodeID, nsip, backplane, tunnelmode, state)
+        cc.save_config()
+        waitfor(200, reason='adding node {}'.format(nsip))
+
+        # Connect to node
+        node = CitrixADC(nsip)
+        if not node.check_connection():
+            logging.error('Node {} not reachable'.format(nsip))
+            exit()
+
+        node.join_cluster(CLIP, 'nsroot')
+        node.save_config()
+        node.reboot()
+        waitfor(100, reason='Joining the cluster')
+
+
+if __name__ == "__main__":
+    # input_data = yaml.load(open("cluster-input.yaml"))
+    # logger.debug(json.dumps(input_data, indent=4))
+    # for key, value in input_data.items():
+    #     if key == 'CLUSTER_IP':
+    #         CLIP = value
+    #     elif key == 'NODES':
+    #         NODES = value
+    #     else:
+    #         logger.error(
+    #             'Input Error: Unknown key {} in input file'.format(key))
+    #         exit()
+
+    input_data = json.load(open('cluster-input.json'))
+    primary_nsips = []
+    all_nsips = []
+    all_instIDs = []
+    for key, value in input_data.items():
+        if key == 'management_aws_netowrk_interface_private_ip':
+            primary_nsips = value['value']
+        elif key == 'management_aws_network_interface_private_ips':
+            all_nsips = value['value']
+        elif key == 'citrix_adc_aws_intance_id':
+            all_instIDs = value['value']
+
+    first_node_private_nsips = all_nsips[0]
+    CLIP = list(set(first_node_private_nsips) - set(primary_nsips))[0]
+    logger.info('CLIP is {}'.format(CLIP))
+
+    # change the password to 'nsroot'
+    for n in range(len(primary_nsips)):
+        node = {}
+        node['ID'] = n
+        node['NSIP'] = primary_nsips[n]
+        NODES.append(node)
+
+        # TODO: remove this code
+        # change password
+        nodeObj = CitrixADC(primary_nsips[n], nspass=all_instIDs[n])
+        nodeObj.change_password(new_pass='nsroot')
+        nodeObj.save_config()
+        nodeObj = None
+    logger.info('Nodes to be added to cluster: {}'.format(NODES))
+
+
+    #check if CLIP is reachable
+    # if rechable
+        # chcek cluster status and nodes
+        # if a node in input_data present in already present cluster, skip
+        # else
+
+    current_node_dict = get_current_cluster_nodes()
+    if current_node_dict:
+        # CLIP is reachable, modify the cluster
+        current_node_ips = []
+        current_node_ids = []
+        new_node_ids = []
+        new_node_ips = []
+        for n in current_node_dict:
+            current_node_ips.append(n['ipaddress'])
+            current_node_ids.append(n['nodeid'])
+
+        for n in NODES:
+            new_node_ips.append(n['NSIP'])
+            new_node_ids.append(str(n['ID']))
+
+        if len(current_node_dict) < len(NODES):
+            # add new nodes
+            node_ips_to_add = list(set(new_node_ips) - set(current_node_ips))
+            node_ids_to_add = list(set(new_node_ids) - set(current_node_ids))
+            logger.info('New node IPs to add: {}'.format(node_ips_to_add))
+            # form dictionary
+            node_dict_to_add = []
+            for i in range(len(node_ips_to_add)):
+                new_node = {}
+                new_node['NSIP'] = node_ips_to_add[i]
+                new_node['ID'] = node_ids_to_add[i]
+                node_dict_to_add.append(new_node)
+            logger.info('Nodes to be added: {}'.format(node_dict_to_add))
+            add_rest_nodes_to_cluster(node_dict_to_add)
+        else:
+            # delete current nodes
+            node_ips_to_delete = list(set(current_node_ips) - set(new_node_ips))
+            node_ids_to_delete = list(set(current_node_ids) - set(new_node_ids))
+            logger.info('Node IPs to delete: {}'.format(node_ips_to_delete))
+            cc = CitrixADC(CLIP)
+            for nodeID in node_ids_to_delete:
+                cc.remove_cluster_node(nodeID)
+                cc.save_config()
+            cc.reboot()
+
+    else:
+        # CLIP not reacbale. Create new cluster
+        # TODO: there can be another reason where CLIP is not reacbale. handle them
+        # add first node to the cluster
+        add_first_node_to_cluster(NODES[0])
+
+        if len(NODES) > 1:
+            # join other nodes
+            add_rest_nodes_to_cluster(NODES[1:])
+
+    # check if the cluster is already present
+    # if not, create cluster and insert nodes one by one
+    # if already present, skip
+
+
+# TODO: remove unwanted exit()
+# TODO: remove waitfor() and input logic
