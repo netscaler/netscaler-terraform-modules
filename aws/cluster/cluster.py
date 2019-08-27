@@ -352,7 +352,7 @@ def check_clusternode_status(nodeip):
                 cnode_state = cnode['state']
                 cnode_masterstate = cnode['masterstate']
 
-                if cnode_op_sync_state == 'SUCCESS':
+                if cnode_masterstate == 'ACTIVE': # TODO: Is `Health` need to check up?
                     return True
                 else:
                     waitfor(20, reason='Try: {}/{}. Waiting for node id:{} ip:{} to become ACTIVE'.format(num_retries, MAX_RETRIES, cnode_id, cnode_ip))
@@ -386,19 +386,19 @@ def add_first_node_to_cluster(n):
     node.add_nsip(CLIP, '255.255.255.255', 'CLIP')
     node.enable_cluster_instance(clusterInstanceID)
     node.save_config()
-    node.reboot()
     if not check_clusternode_status(nodeip=nsip):
         logger.error('Node id:{} ip:{} failed to add to the cluster'.format(nodeID, nsip))
-    else:
-        logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
-    # waitfor(300, reason='waiting for the node to add to the cluster')
-    # TODO: check the state
+        return False
+    logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
+    node.reboot()
+    return True
 
 
 def add_rest_nodes_to_cluster(rest_nodes):
     # for every node
         # login to CLIP, add node
         # login to node, join CLIP
+    nodes_not_added = []
     for n in rest_nodes:
         nsip = n['NSIP']
         nodeID = n['ID']
@@ -427,8 +427,13 @@ def add_rest_nodes_to_cluster(rest_nodes):
         node.reboot()
         if not check_clusternode_status(nodeip=nsip):
             logger.error('Node id:{} ip:{} failed to join the cluster'.format(nodeID, nsip))
+            nodes_not_added.append(nsip)
         else:
             logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
+    if nodes_not_added:
+        logger.error('Could not add nodes: {} to cluster'.format(nodes_not_added))
+        return False
+    return True
 
 
 if __name__ == "__main__":
@@ -482,22 +487,14 @@ if __name__ == "__main__":
             for nodeID in node_ids_to_delete:
                 cc.remove_cluster_node(nodeID)
                 cc.save_config()
-            # cc.reboot()
 
     else:
-        # CLIP not reacbale. Create new cluster
         # TODO: there can be another reason where CLIP is not reacbale. handle them
+        # CLIP not reacbale. Create new cluster
         # add first node to the cluster
         add_first_node_to_cluster(NODES[0])
 
         if len(NODES) > 1:
             # join other nodes
-            add_rest_nodes_to_cluster(NODES[1:])
-
-    # check if the cluster is already present
-    # if not, create cluster and insert nodes one by one
-    # if already present, skip
-
-
-# TODO: remove unwanted exit()
-# TODO: remove waitfor() and input logic
+            if add_rest_nodes_to_cluster(NODES[1:]):
+                logger.info('Successfully added nodes {} to cluster'.format(NODES))
