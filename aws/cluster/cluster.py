@@ -282,6 +282,7 @@ class CitrixADC(HTTPNitro):
                                  data=data)
         if result:
             logger.info('Successfully reboot {}'.format(self.nsip))
+            waitfor(70, reason='Waiting for {} to come up after reboot'.format(self.nsip))
         else:
             logger.error('Could not reboot {}'.format(self.nsip))
             logger.error('Refer log file for more information')
@@ -386,11 +387,11 @@ def add_first_node_to_cluster(n):
     node.add_nsip(CLIP, '255.255.255.255', 'CLIP')
     node.enable_cluster_instance(clusterInstanceID)
     node.save_config()
+    node.reboot()
     if not check_clusternode_status(nodeip=nsip):
         logger.error('Node id:{} ip:{} failed to add to the cluster'.format(nodeID, nsip))
         return False
     logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
-    node.reboot()
     return True
 
 
