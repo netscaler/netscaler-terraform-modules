@@ -25,7 +25,7 @@ logger.addHandler(fh)
 # Global Variables
 CLIP = ""
 NODES = []
-
+MAX_RETRIES = 10
 
 def waitfor(seconds=5, reason=None):
     if reason != None:
@@ -85,7 +85,7 @@ class HTTPNitro():
             logger.debug("do_login response: {}".format(
                 json.dumps(response, indent=4)))
             if response['severity'] == 'ERROR':
-                logging.error('Could not login to {}'.format(self.login_ip))
+                logging.error('Could not login to {}'.format(self.nsip))
                 logging.error('{}: {}'.format(
                     response['errorcode'], response['message']))
                 return False
@@ -303,7 +303,7 @@ class CitrixADC(HTTPNitro):
             result = self.do_put(resource='systemuser',
                                     data=data)
 
-            #TODO: change password does not return proper return code by NitroAPI. might be a bug in NitroAPI
+            # TODO: change password does not return proper return code by NitroAPI. might be a bug in NitroAPI
             if result:
                 self.nspass = new_pass
                 self.headers['X-NITRO-PASS'] = self.nspass
@@ -323,23 +323,50 @@ def get_current_cluster_nodes():
     result = cc.do_get(resource='clusternode')
     return result['clusternode']
 
-def check_cluster_status():
+def check_clusternode_status(nodeip):
     # Before calling this function, CLIP should already been established
     # login to cluster and check the status
     cc = CitrixADC(CLIP)
     if not cc.check_connection():
         return False
 
-    result = cc.do_get(resource='clusternode')
-    # check each cluster node's Health, Operational State. Wait for MAX_RETRIES and exit if not ACTIVE
-    # Health - UP, INIT
-    # Operational State - ACTIVE, INACTIVE
+    num_retries = 0
+    while num_retries < MAX_RETRIES:
+        num_retries += 1
+        result = cc.do_get(resource='clusternode')
+        if result:
+            clusternodes_list = result['clusternode']
+            # check each cluster node's Health, Operational State. Wait for MAX_RETRIES and exit if not ACTIVE
+            # Operational Sync State: SUCCESS, ENABLED, UNKNOWN
+            # Health -->  UNKNOWN, INIT, DOWN, UP
+            # Master State -->  INACTIVE, ACTIVE, UNKNOWN
+            # Effective State --> UP, NOT UP, UNKNOWN, INIT
+            # Success state: masterstate == ACTIVE, Health == UP, 
+            for cnode in clusternodes_list:
+                cnode_ip = cnode['ipaddress']
+                if cnode_ip != nodeip:
+                    continue
+                cnode_id = cnode['nodeid']
+                cnode_op_sync_state = cnode['operationalsyncstate']
+                cnode_health = cnode['health']
+                cnode_state = cnode['state']
+                cnode_masterstate = cnode['masterstate']
 
-    # As of now, validation is only number of nodes
-    if len(NODES) == len(result["clusternode"]):
-        return True
-    else:
+                if cnode_op_sync_state == 'SUCCESS':
+                    return True
+                else:
+                    waitfor(20, reason='Try: {}/{}. Waiting for node id:{} ip:{} to become ACTIVE'.format(num_retries, MAX_RETRIES, cnode_id, cnode_ip))
+
+    if num_retries == MAX_RETRIES:
+        logging.error('The node id:{} ip:{} could not become ACTIVE. Plese login to the node for more details'.format(cnode_id, cnode_ip))
         return False
+
+
+    # # As of now, validation is only number of nodes
+    # if len(NODES) == len(result["clusternode"]):
+    #     return True
+    # else:
+    #     return False
 
 
 def add_first_node_to_cluster(n):
@@ -360,9 +387,12 @@ def add_first_node_to_cluster(n):
     node.enable_cluster_instance(clusterInstanceID)
     node.save_config()
     node.reboot()
-    waitfor(300, reason='waiting for the node to add to the cluster')
+    if not check_clusternode_status(nodeip=nsip):
+        logger.error('Node id:{} ip:{} failed to add to the cluster'.format(nodeID, nsip))
+    else:
+        logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
+    # waitfor(300, reason='waiting for the node to add to the cluster')
     # TODO: check the state
-    # check_cluster_status()
 
 
 def add_rest_nodes_to_cluster(rest_nodes):
@@ -384,7 +414,7 @@ def add_rest_nodes_to_cluster(rest_nodes):
 
         cc.add_cluster_node(nodeID, nsip, backplane, tunnelmode, state)
         cc.save_config()
-        waitfor(200, reason='adding node {}'.format(nsip))
+        waitfor(20, reason='adding node {}'.format(nsip))
 
         # Connect to node
         node = CitrixADC(nsip)
@@ -395,7 +425,10 @@ def add_rest_nodes_to_cluster(rest_nodes):
         node.join_cluster(CLIP, 'nsroot')
         node.save_config()
         node.reboot()
-        waitfor(100, reason='Joining the cluster')
+        if not check_clusternode_status(nodeip=nsip):
+            logger.error('Node id:{} ip:{} failed to join the cluster'.format(nodeID, nsip))
+        else:
+            logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
 
 
 if __name__ == "__main__":
