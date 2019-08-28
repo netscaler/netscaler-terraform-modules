@@ -187,11 +187,11 @@ resource "aws_security_group" "server" {
 
 #TODO: Remove this code
 resource "aws_instance" "test-ubuntu" {
-  ami                         = "ami-0aa7cf8bea71c424f"
-  instance_type               = "t2.micro"
-  key_name                    = var.key_pair_name
-  subnet_id                   = aws_subnet.management.id
-  security_groups   = [aws_security_group.management.id]
+  ami             = "ami-0aa7cf8bea71c424f"
+  instance_type   = "t2.micro"
+  key_name        = var.key_pair_name
+  subnet_id       = aws_subnet.management.id
+  security_groups = [aws_security_group.management.id]
 
   tags = {
     Name = "test-ubuntu"
@@ -238,11 +238,13 @@ resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
         "ec2:StartInstances",
         "ec2:StopInstances",
         "ec2:RebootInstances",
+        "ec2:AssignPrivateIpAddresses",
         "autoscaling:*",
         "sns:*",
         "sqs:*",
         "iam:GetRole",
-        "iam:SimulatePrincipalPolicy"
+        "iam:SimulatePrincipalPolicy",
+        "cloudwatch:*"
       ],
       "Resource": "*",
       "Effect": "Allow"
