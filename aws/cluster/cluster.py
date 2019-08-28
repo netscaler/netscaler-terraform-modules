@@ -440,19 +440,28 @@ def add_rest_nodes_to_cluster(rest_nodes):
 if __name__ == "__main__":
     input_data = yaml.load(open("cluster-input.yaml"))
     logger.debug(json.dumps(input_data, indent=4))
-    for key, value in input_data.items():
-        if key == 'CLUSTER_IP':
-            CLIP = value
-        elif key == 'NODES':
-            NODES = value
-        else:
-            logger.error(
-                'Input Error: Unknown key {} in input file'.format(key))
-            exit()
+    # for key, value in input_data.items():
+    #     if key == 'CLUSTER_IP':
+    #         CLIP = value
+    #     elif key == 'NODES':
+    #         NODES = value
+    #     else:
+    #         logger.error(
+    #             'Input Error: Unknown key {} in input file'.format(key))
+    #         exit()
 
+    # Populate the CLIP and NODES information to global variables
+    try:
+        CLIP = input_data['CLUSTER_IP']
+        NODES = input_data['NODES']
+    except KeyError as e:
+        logger.error('Exception occured while parsing the input: {}'.format(str(e)))
+        exit()
+
+    # Check if the CLIP is already reachable
     current_node_dict = get_current_cluster_nodes()
     if current_node_dict:
-        # CLIP is reachable, modify the cluster
+        # CLIP is reachable, modify(add or delete nodes) the existing cluster
         current_node_ips = []
         current_node_ids = []
         new_node_ids = []
@@ -466,11 +475,13 @@ if __name__ == "__main__":
             new_node_ids.append(str(n['ID']))
 
         if len(current_node_dict) < len(NODES):
+            # TODO: Change the logic to (id, ip) tuple to ensure nodeid and nodeip wont mismatch
+            # TODO: try to do add and delete at the same time. Try not to have if-else separately
             # add new nodes
             node_ips_to_add = list(set(new_node_ips) - set(current_node_ips))
             node_ids_to_add = list(set(new_node_ids) - set(current_node_ids))
             logger.info('New node IPs to add: {}'.format(node_ips_to_add))
-            # form dictionary
+            # form new nodes dictionary
             node_dict_to_add = []
             for i in range(len(node_ips_to_add)):
                 new_node = {}
@@ -490,11 +501,10 @@ if __name__ == "__main__":
                 cc.save_config()
 
     else:
-        # TODO: there can be another reason where CLIP is not reacbale. handle them
+        # TODO: there can be another reason where CLIP is not reacbale. Handle them
         # CLIP not reacbale. Create new cluster
         # add first node to the cluster
         add_first_node_to_cluster(NODES[0])
-
         if len(NODES) > 1:
             # join other nodes
             if add_rest_nodes_to_cluster(NODES[1:]):
