@@ -27,8 +27,9 @@ CLIP = ""
 NODES = []
 MAX_RETRIES = 10
 
-def waitfor(seconds=5, reason=None):
-    if reason != None:
+
+def waitfor(seconds=2, reason=None):
+    if reason is not None:
         logger.info(
             'Waiting for {} seconds. Reason: {}'.format(seconds, reason))
     else:
@@ -91,19 +92,18 @@ class HTTPNitro():
                 return False
             return True
         except Exception as e:
-            logger.error('Exception @ check_connection: {}'.format(str(e)))
+            logger.error('Node {} is not reachable. Reason:{}'.format(self.nsip, str(e)))
             return False
 
     def do_get(self, resource, id=None, action=None):
         url = self.construct_url(resource, id, action)
+        logger.debug('GET {}'.format(url))
 
-        logging.debug('url: {}'.format(url))
         r = requests.get(
             url=url,
             headers=self.headers,
             verify=False,
         )
-        waitfor()
         if r.status_code == 200:
             response = r.json()
             logger.debug("do_get response: {}".format(
@@ -115,6 +115,8 @@ class HTTPNitro():
 
     def do_post(self, resource, data, id=None, action=None):
         url = self.construct_url(resource, id, action)
+        logger.debug('POST {}'.format(url))
+        logger.debug('POST data: {}'.format(json.dumps(data, indent = 4)))
 
         r = requests.post(
             url=url,
@@ -123,7 +125,6 @@ class HTTPNitro():
         )
         # print(r.text)
         logger.info(r.status_code)
-        waitfor()
         if r.status_code == 201 or r.status_code == 200:
             return True
         else:
@@ -132,13 +133,14 @@ class HTTPNitro():
 
     def do_put(self, resource, data, id=None, action=None):
         url = self.construct_url(resource, id, action)
+        logger.debug('PUT {}'.format(url))
+        logger.debug('PUT data: {}'.format(json.dumps(data, indent = 4)))
 
         r = requests.put(
             url=url,
             headers=self.headers,
             json=data,
         )
-        waitfor()
         if r.status_code == 201 or r.status_code == 200:
             return True
         else:
@@ -147,12 +149,12 @@ class HTTPNitro():
 
     def do_delete(self, resource, id=None, action=None):
         url = self.construct_url(resource, id, action)
+        logger.debug('DELETE {}'.format(url))
 
         r = requests.delete(
             url=url,
             headers=self.headers,
         )
-        waitfor()
         if r.status_code == 200:
             return True
         else:
@@ -288,23 +290,22 @@ class CitrixADC(HTTPNitro):
             logger.error('Refer log file for more information')
             raise Exception
 
-    def change_password(self, nsuser='nsroot', new_pass='nsroot'):
+    def change_password(self, new_pass='nsroot'):
         # check for new_pass already updated
-        pass_bck = self.nspass
         self.nspass = new_pass
+        logger.debug('Before changing the password of {}, checking if the password is already updated'.format(self.nsip))
         if self.check_connection():
             logger.info('Password already changed to {}'.format(new_pass))
             self.headers['X-NITRO-PASS'] = self.nspass
             return True
         else:
             data = {"systemuser": {
-                "username": nsuser,
+                "username": self.nsuser,
                 "password": new_pass,
             }}
             result = self.do_put(resource='systemuser',
                                     data=data)
 
-            # TODO: change password does not return proper return code by NitroAPI. might be a bug in NitroAPI
             if result:
                 self.nspass = new_pass
                 self.headers['X-NITRO-PASS'] = self.nspass
@@ -327,6 +328,7 @@ def get_current_cluster_nodes():
 def check_clusternode_status(nodeip):
     # Before calling this function, CLIP should already been established
     # login to cluster and check the status
+    # TODO: retry needed
     cc = CitrixADC(CLIP)
     if not cc.check_connection():
         return False
@@ -342,15 +344,15 @@ def check_clusternode_status(nodeip):
             # Health -->  UNKNOWN, INIT, DOWN, UP
             # Master State -->  INACTIVE, ACTIVE, UNKNOWN
             # Effective State --> UP, NOT UP, UNKNOWN, INIT
-            # Success state: masterstate == ACTIVE, Health == UP, 
+            # Success state: masterstate == ACTIVE, Health == UP
             for cnode in clusternodes_list:
                 cnode_ip = cnode['ipaddress']
                 if cnode_ip != nodeip:
                     continue
                 cnode_id = cnode['nodeid']
-                cnode_op_sync_state = cnode['operationalsyncstate']
-                cnode_health = cnode['health']
-                cnode_state = cnode['state']
+                # cnode_op_sync_state = cnode['operationalsyncstate']
+                # cnode_health = cnode['health']
+                # cnode_state = cnode['state']
                 cnode_masterstate = cnode['masterstate']
 
                 if cnode_masterstate == 'ACTIVE': # TODO: Is `Health` need to check up?
@@ -363,20 +365,13 @@ def check_clusternode_status(nodeip):
         return False
 
 
-    # # As of now, validation is only number of nodes
-    # if len(NODES) == len(result["clusternode"]):
-    #     return True
-    # else:
-    #     return False
-
-
 def add_first_node_to_cluster(n):
     nsip = n['NSIP']
     nodeID = n['ID']
     backplane = '{}/1/1'.format(nodeID)
     tunnelmode = 'GRE'
     state = 'ACTIVE'
-    clusterInstanceID = 1  # Assumption
+    clusterInstanceID = 1  # TODO: need to take cluster instance ID as input
 
     node = CitrixADC(nsip)
     if not node.check_connection():
@@ -399,7 +394,6 @@ def add_rest_nodes_to_cluster(rest_nodes):
     # for every node
         # login to CLIP, add node
         # login to node, join CLIP
-    nodes_not_added = []
     for n in rest_nodes:
         nsip = n['NSIP']
         nodeID = n['ID']
@@ -415,7 +409,6 @@ def add_rest_nodes_to_cluster(rest_nodes):
 
         cc.add_cluster_node(nodeID, nsip, backplane, tunnelmode, state)
         cc.save_config()
-        waitfor(20, reason='adding node {}'.format(nsip))
 
         # Connect to node
         node = CitrixADC(nsip)
@@ -423,32 +416,20 @@ def add_rest_nodes_to_cluster(rest_nodes):
             logging.error('Node {} not reachable'.format(nsip))
             exit()
 
-        node.join_cluster(CLIP, 'nsroot')
+        node.join_cluster(CLIP, 'nsroot') # TODO: need to take password as input
         node.save_config()
         node.reboot()
         if not check_clusternode_status(nodeip=nsip):
             logger.error('Node id:{} ip:{} failed to join the cluster'.format(nodeID, nsip))
-            nodes_not_added.append(nsip)
+            # If one node addition fails, do not process other nodes in queue
+            break
         else:
             logger.info('Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
-    if nodes_not_added:
-        logger.error('Could not add nodes: {} to cluster'.format(nodes_not_added))
-        return False
-    return True
 
 
 if __name__ == "__main__":
     input_data = yaml.load(open("cluster-input.yaml"))
     logger.debug(json.dumps(input_data, indent=4))
-    # for key, value in input_data.items():
-    #     if key == 'CLUSTER_IP':
-    #         CLIP = value
-    #     elif key == 'NODES':
-    #         NODES = value
-    #     else:
-    #         logger.error(
-    #             'Input Error: Unknown key {} in input file'.format(key))
-    #         exit()
 
     # Populate the CLIP and NODES information to global variables
     try:
@@ -509,3 +490,14 @@ if __name__ == "__main__":
             # join other nodes
             if add_rest_nodes_to_cluster(NODES[1:]):
                 logger.info('Successfully added nodes {} to cluster'.format(NODES))
+
+# check all node's status at last
+    nodes_not_added = []
+    for node in NODES:
+        nsip = n['NSIP']
+        if not check_clusternode_status(nsip):
+            nodes_not_added.append(nsip)
+    if not nodes_not_added:
+        logging.error('Nodes not added to cluster: {}'.format(nodes_not_added))
+    else:
+        logging.info('All nodes added to cluster')
