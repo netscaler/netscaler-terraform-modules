@@ -23,7 +23,7 @@ resource "aws_key_pair" "keypair" {
 resource "aws_subnet" "management" {
   vpc_id                  = aws_vpc.terraform.id
   cidr_block              = var.management_subnet_cidr_block
-  map_public_ip_on_launch = true
+  # map_public_ip_on_launch = true
   availability_zone       = var.aws_availability_zone
 
   tags = {
@@ -34,11 +34,11 @@ resource "aws_subnet" "management" {
 resource "aws_subnet" "client" {
   vpc_id                  = aws_vpc.terraform.id
   cidr_block              = var.client_subnet_cidr_block
-  map_public_ip_on_launch = true
+  # map_public_ip_on_launch = true
   availability_zone       = var.aws_availability_zone
 
   tags = {
-    Name = "Terraform Public Subnet"
+    Name = "Terraform Public-Client Subnet"
   }
 }
 
@@ -60,7 +60,7 @@ resource "aws_internet_gateway" "TR_iGW" {
   }
 }
 
-resource "aws_route_table" "main_rt_table" {
+resource "aws_route_table" "client_rtb" {
   vpc_id = aws_vpc.terraform.id
 
   route {
@@ -69,51 +69,87 @@ resource "aws_route_table" "main_rt_table" {
   }
 
   tags = {
-    Name = "Terraform Main Route Table"
+    Name = "Terraform Client-Side Route Table"
   }
 }
 
-resource "aws_main_route_table_association" "TR_main_route" {
+resource "aws_main_route_table_association" "client_rtb_association" {
   vpc_id         = aws_vpc.terraform.id
-  route_table_id = aws_route_table.main_rt_table.id
+  route_table_id = aws_route_table.client_rtb.id
 }
 
-resource "aws_default_security_group" "default" {
-  vpc_id = aws_vpc.terraform.id
+resource "aws_eip" "nat_gw" {
+  vpc               = true
 
   tags = {
-    Name = "Terraform Default-Security-Group"
+    Name = "NAT_GW EIP"
+  }
+}
+resource "aws_nat_gateway" "management_nat_gw" {
+  allocation_id = aws_eip.nat_gw.id
+  subnet_id     = aws_subnet.client.id
+
+  depends_on = ["aws_internet_gateway.TR_iGW"]
+  tags = {
+    Name = "Management NAT_GW"
   }
 }
 
-resource "aws_security_group_rule" "default_ingress" {
-  type                     = "ingress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = aws_default_security_group.default.id
-  security_group_id        = aws_default_security_group.default.id
+resource "aws_route_table" "management_rtb" {
+  vpc_id = aws_vpc.terraform.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.management_nat_gw.id
+  }
+
+  tags = {
+    Name = "Terraform Client-Side Route Table"
+  }
 }
 
-resource "aws_security_group_rule" "default_egress" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_default_security_group.default.id
+resource "aws_main_route_table_association" "management_rtb_association" {
+  vpc_id         = aws_vpc.terraform.id
+  route_table_id = aws_route_table.management_rtb.id
 }
 
-resource "aws_security_group" "management" {
+# TODO: Is this default SG required?
+# resource "aws_default_security_group" "default" {
+#   vpc_id = aws_vpc.terraform.id
+
+#   tags = {
+#     Name = "Terraform Default-Security-Group"
+#   }
+# }
+
+# resource "aws_security_group_rule" "default_ingress" {
+#   type                     = "ingress"
+#   from_port                = 0
+#   to_port                  = 0
+#   protocol                 = "-1"
+#   source_security_group_id = aws_default_security_group.default.id
+#   security_group_id        = aws_default_security_group.default.id
+# }
+
+# resource "aws_security_group_rule" "default_egress" {
+#   type              = "egress"
+#   from_port         = 0
+#   to_port           = 0
+#   protocol          = "-1"
+#   cidr_blocks       = ["0.0.0.0/0"]
+#   security_group_id = aws_default_security_group.default.id
+# }
+
+resource "aws_security_group" "inside_allow_all" {
   vpc_id      = aws_vpc.terraform.id
-  name        = "Terraform management"
-  description = "Allow everything from within the management network"
+  name        = "inside_allow_all"
+  description = "Allow everything from within the network"
 
   ingress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
+    cidr_blocks = ["0.0.0.0/0"] #concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
   }
 
   egress {
@@ -124,28 +160,20 @@ resource "aws_security_group" "management" {
   }
 
   tags = {
-    Name = "Terraform Management Security Group"
+    Name = "inside_allow_all"
   }
 }
 
-resource "aws_security_group" "client" {
-  name        = "Terraform client side"
-  description = "Allow Web Traffic from everywhere"
-
-  vpc_id = aws_vpc.terraform.id
+resource "aws_security_group" "outside_world" {
+  vpc_id      = aws_vpc.terraform.id
+  name        = "outside_world"
+  description = "outside world traffic"
 
   ingress {
-    from_port   = 443
-    to_port     = 443
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] #concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
   }
 
   egress {
@@ -156,45 +184,143 @@ resource "aws_security_group" "client" {
   }
 
   tags = {
-    Name = "Terraform Client Security Group"
+    Name = "outside_world"
   }
 }
 
-resource "aws_security_group" "server" {
-  name        = "Terraform server side"
-  description = "Allow all traffic from the server subnet"
+# resource "aws_security_group" "management" {
+#   vpc_id      = aws_vpc.terraform.id
+#   name        = "Terraform management"
+#   description = "Allow everything from within the management network"
 
-  vpc_id = aws_vpc.terraform.id
+#   ingress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
+#   }
 
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [aws_subnet.server.cidr_block]
-  }
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   tags = {
+#     Name = "Terraform Management Security Group"
+#   }
+# }
 
-  tags = {
-    Name = "Terraform Server Security Group"
-  }
-}
+# resource "aws_security_group" "client" {
+#   name        = "Terraform client side"
+#   description = "Allow Web Traffic from everywhere"
+
+#   vpc_id = aws_vpc.terraform.id
+
+#   ingress {
+#     from_port   = 443
+#     to_port     = 443
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   ingress {
+#     from_port   = 80
+#     to_port     = 80
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = {
+#     Name = "Terraform Client Security Group"
+#   }
+# }
+
+# resource "aws_security_group" "server" {
+#   name        = "Terraform server side"
+#   description = "Allow all traffic from the server subnet"
+
+#   vpc_id = aws_vpc.terraform.id
+
+#   ingress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = [aws_subnet.server.cidr_block]
+#   }
+
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = {
+#     Name = "Terraform Server Security Group"
+#   }
+# }
 
 #TODO: Remove this code
-resource "aws_instance" "test-ubuntu" {
+resource "aws_instance" "test_ubuntu" {
   ami             = "ami-0aa7cf8bea71c424f"
   instance_type   = "t2.micro"
   key_name        = var.key_pair_name
-  subnet_id       = aws_subnet.management.id
-  security_groups = [aws_security_group.management.id]
+  # subnet_id       = aws_subnet.management.id
+  # security_groups = [aws_security_group.management.id]
+
+  network_interface {
+    network_interface_id = aws_network_interface.ubuntu_management.id
+    device_index         = 0
+  }
 
   tags = {
-    Name = "test-ubuntu"
+    Name = "test_ubuntu"
+  }
+}
+
+resource "aws_network_interface" "ubuntu_management" {
+  subnet_id         = aws_subnet.management.id
+  security_groups   = [aws_security_group.inside_allow_all.id]
+
+  tags = {
+    Name        = "Ubuntu Management ENI"
+    Description = "Ubuntu Management ENI"
+  }
+}
+
+resource "aws_network_interface" "ubuntu_client" {
+  subnet_id       = aws_subnet.client.id
+  security_groups = [aws_security_group.outside_world.id]
+
+  attachment {
+    instance     = aws_instance.test_ubuntu.id
+    device_index = 1
+  }
+
+  tags = {
+    Name        = "Ubuntu Public-Client ENI"
+    Description = "Ubuntu Public-Client ENI"
+  }
+}
+
+resource "aws_eip" "test_ubuntu" {
+  vpc               = true
+  network_interface = aws_network_interface.ubuntu_client.id
+
+  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
+  depends_on = [aws_instance.test_ubuntu]
+
+  tags = {
+    Name = "Ubuntu Public-Client EIP"
   }
 }
 
@@ -214,7 +340,7 @@ resource "aws_instance" "citrix_adc" {
   iam_instance_profile = aws_iam_instance_profile.citrix_adc_cluster_instance_profile.name
 
   tags = {
-    Name = format("Citrix ADC Node %v", count.index)
+    Name = format("CitrixADC Node %v", count.index)
   }
 }
 
@@ -290,7 +416,7 @@ resource "aws_iam_instance_profile" "citrix_adc_cluster_instance_profile" {
 resource "aws_network_interface" "management" {
   count             = var.initial_num_nodes
   subnet_id         = aws_subnet.management.id
-  security_groups   = [aws_security_group.management.id]
+  security_groups   = [aws_security_group.inside_allow_all.id]
   private_ips_count = count.index == 0 ? 1 : 0 # Create secondary IPs only for the 1st node. This secondary IP acts as Cluster IP
 
   tags = {
@@ -302,7 +428,7 @@ resource "aws_network_interface" "management" {
 resource "aws_network_interface" "client" {
   count           = var.initial_num_nodes
   subnet_id       = aws_subnet.client.id
-  security_groups = [aws_security_group.client.id]
+  security_groups = [aws_security_group.inside_allow_all.id]
 
   attachment {
     instance     = element(aws_instance.citrix_adc.*.id, count.index)
@@ -310,16 +436,15 @@ resource "aws_network_interface" "client" {
   }
 
   tags = {
-    Name        = format("Terraform NS Client Interface %v", count.index)
-    Description = format("Client Interface for Citrix ADC %v", count.index)
+    Name        = format("Terraform NS Public-Client Interface %v", count.index)
+    Description = format("Public-Client Interface for Citrix ADC %v", count.index)
   }
-
 }
 
 resource "aws_network_interface" "server" {
   count           = var.initial_num_nodes
   subnet_id       = aws_subnet.server.id
-  security_groups = [aws_security_group.server.id]
+  security_groups = [aws_security_group.inside_allow_all.id]
 
   attachment {
     instance     = element(aws_instance.citrix_adc.*.id, count.index)
@@ -330,7 +455,6 @@ resource "aws_network_interface" "server" {
     Name        = format("Terraform NS Server Interface %v", count.index)
     Description = format("Server Interface for Citrix ADC %v", count.index)
   }
-
 }
 
 # resource "aws_eip" "nsip" {
