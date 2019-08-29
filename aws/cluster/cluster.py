@@ -328,10 +328,13 @@ def get_current_cluster_nodes():
 def check_clusternode_status(nodeip):
     # Before calling this function, CLIP should already been established
     # login to cluster and check the status
-    # TODO: retry needed
-    cc = CitrixADC(CLIP)
-    if not cc.check_connection():
-        return False
+    # Retry twice to reach
+    for i in [1,2]:
+        cc = CitrixADC(CLIP)
+        if not cc.check_connection():
+            if i == 1:
+                continue
+            return False
 
     num_retries = 0
     while num_retries < MAX_RETRIES:
@@ -355,7 +358,7 @@ def check_clusternode_status(nodeip):
                 # cnode_state = cnode['state']
                 cnode_masterstate = cnode['masterstate']
 
-                if cnode_masterstate == 'ACTIVE': # TODO: Is `Health` need to check up?
+                if cnode_masterstate == 'ACTIVE': # Is `Health` need to check up?
                     return True
                 else:
                     waitfor(20, reason='Try: {}/{}. Waiting for node id:{} ip:{} to become ACTIVE'.format(num_retries, MAX_RETRIES, cnode_id, cnode_ip))
