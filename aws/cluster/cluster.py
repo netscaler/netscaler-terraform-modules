@@ -496,11 +496,11 @@ if __name__ == "__main__":
 
 # check all node's status at last
     nodes_not_added = []
-    for node in NODES:
+    for n in NODES:
         nsip = n['NSIP']
         if not check_clusternode_status(nsip):
             nodes_not_added.append(nsip)
-    if not nodes_not_added:
+    if nodes_not_added:
         logging.error('Nodes not added to cluster: {}'.format(nodes_not_added))
     else:
         logging.info('All nodes added to cluster')
