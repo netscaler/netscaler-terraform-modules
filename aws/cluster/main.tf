@@ -73,6 +73,11 @@ resource "aws_route_table" "client_rtb" {
   }
 }
 
+resource "aws_route_table_association" "client_rtb_association" {
+  subnet_id      = aws_subnet.client.id
+  route_table_id = aws_route_table.client_rtb.id
+}
+
 resource "aws_main_route_table_association" "client_rtb_association" {
   vpc_id         = aws_vpc.terraform.id
   route_table_id = aws_route_table.client_rtb.id
@@ -104,8 +109,13 @@ resource "aws_route_table" "management_rtb" {
   }
 
   tags = {
-    Name = "Terraform Client-Side Route Table"
+    Name = "Terraform Management Route Table"
   }
+}
+
+resource "aws_route_table_association" "mgmt_rtb_association" {
+  subnet_id      = aws_subnet.management.id
+  route_table_id = aws_route_table.management_rtb.id
 }
 
 resource "aws_main_route_table_association" "management_rtb_association" {
@@ -173,7 +183,14 @@ resource "aws_security_group" "outside_world" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] #concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -278,7 +295,7 @@ resource "aws_instance" "test_ubuntu" {
   # security_groups = [aws_security_group.management.id]
 
   network_interface {
-    network_interface_id = aws_network_interface.ubuntu_management.id
+    network_interface_id = aws_network_interface.ubuntu_client.id
     device_index         = 0
   }
 
@@ -291,6 +308,11 @@ resource "aws_network_interface" "ubuntu_management" {
   subnet_id         = aws_subnet.management.id
   security_groups   = [aws_security_group.inside_allow_all.id]
 
+  attachment {
+    instance     = aws_instance.test_ubuntu.id
+    device_index = 1
+  }
+
   tags = {
     Name        = "Ubuntu Management ENI"
     Description = "Ubuntu Management ENI"
@@ -300,11 +322,6 @@ resource "aws_network_interface" "ubuntu_management" {
 resource "aws_network_interface" "ubuntu_client" {
   subnet_id       = aws_subnet.client.id
   security_groups = [aws_security_group.outside_world.id]
-
-  attachment {
-    instance     = aws_instance.test_ubuntu.id
-    device_index = 1
-  }
 
   tags = {
     Name        = "Ubuntu Public-Client ENI"

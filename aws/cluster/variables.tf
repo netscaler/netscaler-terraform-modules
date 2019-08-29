@@ -102,3 +102,18 @@ EOF
 
   default = "m4.xlarge"
 }
+
+variable "cluster_backplane" {
+  description = "cluster backplane"
+  default = "1/1"
+}
+
+variable "cluster_tunnel" {
+  description = "cluster tunnel"
+  default = "GRE"
+}
+
+variable "nodes_password" {
+  description = "General password for all the nodes"
+  default = "nsroot"
+}
