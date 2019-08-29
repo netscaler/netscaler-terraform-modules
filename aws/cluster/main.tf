@@ -23,7 +23,6 @@ resource "aws_key_pair" "keypair" {
 resource "aws_subnet" "management" {
   vpc_id                  = aws_vpc.terraform.id
   cidr_block              = var.management_subnet_cidr_block
-  # map_public_ip_on_launch = true
   availability_zone       = var.aws_availability_zone
 
   tags = {
@@ -34,7 +33,6 @@ resource "aws_subnet" "management" {
 resource "aws_subnet" "client" {
   vpc_id                  = aws_vpc.terraform.id
   cidr_block              = var.client_subnet_cidr_block
-  # map_public_ip_on_launch = true
   availability_zone       = var.aws_availability_zone
 
   tags = {
@@ -286,9 +284,11 @@ resource "aws_security_group" "outside_world" {
 #   }
 # }
 
-#TODO: Remove this code
+
+
+
 resource "aws_instance" "test_ubuntu" {
-  ami             = "ami-0aa7cf8bea71c424f"
+  ami             = "ami-0aa7cf8bea71c424f" # TODO: create map for regions
   instance_type   = "t2.micro"
   key_name        = var.key_pair_name
   # subnet_id       = aws_subnet.management.id
@@ -301,6 +301,44 @@ resource "aws_instance" "test_ubuntu" {
 
   tags = {
     Name = "test_ubuntu"
+  }
+
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
+
+  connection {
+    host = aws_eip.test_ubuntu.public_ip
+    type = "ssh"
+    user = "ubuntu"
+    private_key = "${file(var.private_key_path)}"
+  }
+
+   provisioner "file" {
+    source      = "cluster.py"
+    destination = "/home/ubuntu/cluster.py"
+  } 
+}
+
+resource "aws_network_interface" "ubuntu_client" {
+  subnet_id       = aws_subnet.client.id
+  security_groups = [aws_security_group.outside_world.id]
+
+  tags = {
+    Name        = "Ubuntu Public-Client ENI"
+    Description = "Ubuntu Public-Client ENI"
+  }
+}
+
+resource "aws_eip" "test_ubuntu" {
+  vpc               = true
+  network_interface = aws_network_interface.ubuntu_client.id
+
+  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
+  depends_on = [aws_network_interface.ubuntu_client]
+
+  tags = {
+    Name = "Ubuntu Public-Client EIP"
   }
 }
 
@@ -319,27 +357,6 @@ resource "aws_network_interface" "ubuntu_management" {
   }
 }
 
-resource "aws_network_interface" "ubuntu_client" {
-  subnet_id       = aws_subnet.client.id
-  security_groups = [aws_security_group.outside_world.id]
-
-  tags = {
-    Name        = "Ubuntu Public-Client ENI"
-    Description = "Ubuntu Public-Client ENI"
-  }
-}
-
-resource "aws_eip" "test_ubuntu" {
-  vpc               = true
-  network_interface = aws_network_interface.ubuntu_client.id
-
-  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
-  depends_on = [aws_instance.test_ubuntu]
-
-  tags = {
-    Name = "Ubuntu Public-Client EIP"
-  }
-}
 
 # Citrix related resources
 resource "aws_instance" "citrix_adc" {
@@ -359,6 +376,15 @@ resource "aws_instance" "citrix_adc" {
   tags = {
     Name = format("CitrixADC Node %v", count.index)
   }
+
+  provisioner "local-exec" {
+  when = "destroy"
+  command = count.index != 0 ? "ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
+      element(tolist(aws_network_interface.management[0].private_ips),0)
+     == aws_network_interface.management[0].private_ip 
+    ? element(tolist(aws_network_interface.management[0].private_ips),1) : 
+    element(tolist(aws_network_interface.management[0].private_ips),0)} --node-ips ${self.private_ip}'" : "true"
+  }   
 }
 
 resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
@@ -514,3 +540,18 @@ resource "aws_network_interface" "server" {
 #     command     = "setup_single_cluster.sh"
 #   }
 # }
+
+
+resource "null_resource" "cluster" {
+
+  provisioner "local-exec" {
+
+  command = var.initial_num_nodes != 0 ? "sleep 60 && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
+      element(tolist(aws_network_interface.management[0].private_ips),0)
+     == aws_network_interface.management[0].private_ip 
+    ? element(tolist(aws_network_interface.management[0].private_ips),1) : 
+    element(tolist(aws_network_interface.management[0].private_ips),0)} --node-ips ${join(" ", 
+    aws_network_interface.management[*].private_ip)} --inst-ids ${join(" ",
+     aws_instance.citrix_adc[*].id)} --backplane ${var.cluster_backplane} --tunnelmode ${var.cluster_tunnelmode}'" : "true"
+  }  
+}

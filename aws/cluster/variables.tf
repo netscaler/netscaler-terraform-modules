@@ -8,6 +8,11 @@ variable "aws_secret_key" {
 variable "ssh_pub_key" {
   description = "The public part of the SSH key you will use to access EC2 instances"
 }
+
+variable "private_key_path" {
+  description = "Path to private key"
+}
+
 variable "aws_region" {
   description = "The AWS region to create things in"
   default     = "us-east-1"
@@ -101,15 +106,15 @@ EOF
 
 variable "cluster_backplane" {
   description = "cluster backplane"
-  default = "1/1"
+  default     = "1/1"
 }
 
-variable "cluster_tunnel" {
-  description = "cluster tunnel"
-  default = "GRE"
+variable "cluster_tunnelmode" {
+  description = "cluster tunnelmode"
+  default     = "GRE"
 }
 
 variable "nodes_password" {
   description = "General password for all the nodes"
-  default = "nsroot"
+  default     = "nsroot"
 }
