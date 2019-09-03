@@ -1,6 +1,6 @@
-# Automating Citrix ADC Cluster - for Apple
+# Automating Citrix ADC Cluster - for CUSTOMERNAME
 
-The below documentation gives a overview on the provision Citrix ADC clustering using Terraform tool
+The below documentation provides an overview on the provisioning of Citrix ADC clustering using Terraform tool
 
 ## Pre-requisities
 1. Terraform v.12.0+
@@ -89,10 +89,14 @@ The below documentation gives a overview on the provision Citrix ADC clustering 
 ## Assumptions
 1. The automation handles only 1 cluster for now
 2. All added nodes will go to `state=ACTIVE` by default
-3. Adding of nodes will take place serially
-4. Deleting of nodes may have some issues
+3. Adding of nodes will take place **serially**
 
-## What does the Terraform do
+## What does the Solution do -
+There are two components involved.
+- Terraform Tool - which creates the *infrastructure* such as VPC, subnets, required number of CitrixADCs (nodes)
+- cluster.py script which helps in managing (add/update/delete) the cluster nodes
+
+### Role of Terraform tool
 - Creates a VPC - `Terraform VPC`
 - Creates 3 subnets - `management`, `client`, `server`
 - Creates 2 security groups - `inside_allow_all`, `outside_world`
@@ -104,9 +108,17 @@ The below documentation gives a overview on the provision Citrix ADC clustering 
 - Role - `citrix_adc_cluster_role`
 - 3 ENIs for each CitrixADC - `management`, `server`, `client`
 - 2 ENIs for test_ubuntu - `ubuntu_client`, `ubuntu_management`
+> Terraform copies `cluster.py` to `test_ubuntu` (acts as jumpBox) and executes it remotely, by passing required arguments.
+
+### Role of `cluster.py` script
+- Depending on the arguments, this script adds/updates/deletes the required number of nodes to/from the cluster.
+
+## Limitations, for now
+1. Deleting of nodes may have some issues. Please check `Known Issues` section
+2. Complete `terraform destroy` may have issues. Refer `Known Issues` for troubleshooting.
 
 ## Support in the next release
-1. A prefix to all the resources created by Terraform so that there can be multiple deployment in the same aws region
+1. A `prefix` to all the resources created by Terraform so that there can be multiple deployment in the same aws region
 2. Taking input of `vpcid` and `subnets` if already present and use them while provisioning Citrix ADCs
 3. Stable nodes deletion support
 4. Stable `terraform destroy` support
@@ -119,4 +131,3 @@ The below documentation gives a overview on the provision Citrix ADC clustering 
 3. Some random error while `terraform apply`
 **Solution**:  Delete `teraform.tfstate` file
 4. When the `cluster.py` script fails (due to an exception), even when the node is successfully added to the cluster, on the next run the terraform marks these instances as `tainted` and repalace these instances without removing these nodes from the cluster, hence we may have some extra nodes as `UNKNOWN` state.
-5. When two nodes are added after a successful cluster creation, CLIP is not reachable

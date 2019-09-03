@@ -341,7 +341,7 @@ resource "aws_instance" "citrix_adc" {
 
 
 resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
-  name = "citrix_adc_cluster_policy103"
+  name = "citrix_adc_cluster_policy"
   role = aws_iam_role.citrix_adc_cluster_role.name
 
   policy = <<EOF
@@ -374,11 +374,10 @@ resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
   ]
 }
 EOF
-
 }
 
 resource "aws_iam_role" "citrix_adc_cluster_role" {
-  name = "citrix_adc_cluster_role103"
+  name = "citrix_adc_cluster_role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -403,7 +402,7 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "citrix_adc_cluster_instance_profile" {
-  name = "citrix_adc_cluster_instance_profile103"
+  name = "citrix_adc_cluster_instance_profile"
   path = "/"
   role = aws_iam_role.citrix_adc_cluster_role.name
 }
@@ -413,7 +412,7 @@ resource "aws_network_interface" "management" {
   count             = var.initial_num_nodes
   subnet_id         = aws_subnet.management.id
   security_groups   = [aws_security_group.inside_allow_all.id]
-  private_ips_count = (count.index == 0 && var.modify_cluster == false) ? 1 : 0 # Create secondary IPs only for the 1st node. This secondary IP acts as Cluster IP
+  private_ips_count = count.index == 0 ? 1 : 0 # Create secondary IPs only for the 1st node. This secondary IP acts as Cluster IP
 
   tags = {
     Name        = format("Terraform NS Management interface %v", count.index)

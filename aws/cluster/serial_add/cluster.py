@@ -82,14 +82,15 @@ class HTTPNitro():
             }
         }
         try:
-            logging.debug('post_data: {}'.format(json.dumps(payload, indent=4)))
+            logger.debug('post_data: {}'.format(json.dumps(payload, indent=4)))
+            logger.debug('HEADERS: {}'.format(json.dumps(self.headers, indent=4)))
             r = requests.post(url=url, headers=headers, json=payload)
             response = r.json()
             logger.debug("do_login response: {}".format(
                 json.dumps(response, indent=4)))
             if response['severity'] == 'ERROR':
-                logging.error('Could not login to {}'.format(self.nsip))
-                logging.error('{}: {}'.format(
+                logger.error('Could not login to {} with user:{} and passwd:{}'.format(self.nsip, self.nsuser, self.nspass))
+                logger.error('{}: {}'.format(
                     response['errorcode'], response['message']))
                 return False
             return True
@@ -101,6 +102,7 @@ class HTTPNitro():
     def do_get(self, resource, id=None, action=None):
         url = self.construct_url(resource, id, action)
         logger.debug('GET {}'.format(url))
+        logger.debug('HEADERS: {}'.format(json.dumps(self.headers, indent=4)))
 
         r = requests.get(
             url=url,
@@ -120,6 +122,7 @@ class HTTPNitro():
         url = self.construct_url(resource, id, action)
         logger.debug('POST {}'.format(url))
         logger.debug('POST data: {}'.format(json.dumps(data, indent=4)))
+        logger.debug('HEADERS: {}'.format(json.dumps(self.headers, indent=4)))
 
         r = requests.post(
             url=url,
@@ -138,6 +141,7 @@ class HTTPNitro():
         url = self.construct_url(resource, id, action)
         logger.debug('PUT {}'.format(url))
         logger.debug('PUT data: {}'.format(json.dumps(data, indent=4)))
+        logger.debug('HEADERS: {}'.format(json.dumps(self.headers, indent=4)))
 
         r = requests.put(
             url=url,
@@ -153,6 +157,7 @@ class HTTPNitro():
     def do_delete(self, resource, id=None, action=None):
         url = self.construct_url(resource, id, action)
         logger.debug('DELETE {}'.format(url))
+        logger.debug('HEADERS: {}'.format(json.dumps(self.headers, indent=4)))
 
         r = requests.delete(
             url=url,
@@ -320,13 +325,14 @@ class CitrixADC(HTTPNitro):
     def change_password(self, new_pass='nsroot'):
         # check for new_pass already updated
         self.nspass = new_pass
-        logger.debug(
+        logger.info(
             'Before changing the password of {} to {}, checking if the password is already updated'.format(self.nsip, self.nspass))
         if self.check_connection():
             logger.info('Password already changed to {}'.format(self.nspass))
             self.headers['X-NITRO-PASS'] = self.nspass
             return True
         else:
+            logger.info('Password has not been changed earlier, need to change it')
             data = {"systemuser": {
                 "username": self.nsuser,
                 "password": new_pass,
@@ -364,6 +370,7 @@ def check_clusternode_status(nodeip):
         cc = CitrixADC(CLIP)
         if not cc.check_connection():
             if i == 1:
+                logging.debug('Trying again to connect to CLIP:{}'.format(CLIP))
                 continue
             return False
 
@@ -396,8 +403,7 @@ def check_clusternode_status(nodeip):
                         num_retries, MAX_RETRIES, cnode_id, cnode_ip))
 
     if num_retries == MAX_RETRIES:
-        logging.error('The node id:{} ip:{} could not become ACTIVE. Plese login to the node for more details'.format(
-            cnode_id, cnode_ip))
+        logger.error('The node ip:{} could not become ACTIVE. Plese login to the node for more details'.format(nodeip))
         return False
 
 
@@ -411,7 +417,7 @@ def add_first_node_to_cluster(nodeip, backplane='1/1', tunnelmode='GRE'):
 
     node = CitrixADC(nsip)
     if not node.check_connection():
-        logging.error('Node {} not reachable'.format(nsip))
+        logger.error('Node {} not reachable'.format(nsip))
         exit()
     node.add_cluster_instance(clusterInstanceID)
     node.add_cluster_node(nodeID, nsip, backplane, tunnelmode, state)
@@ -442,7 +448,7 @@ def add_rest_nodes_to_cluster(rest_nodeips, rest_nodeids, cluster_backplane='1/1
         # Connect to Cluster Coordinator
         cc = CitrixADC(CLIP)
         if not cc.check_connection():
-            logging.error('Node {} not reachable'.format(nsip))
+            logger.error('Node {} not reachable'.format(nsip))
             exit()
 
         cc.add_cluster_node(nodeID, nsip, backplane, tunnelmode, state)
@@ -454,7 +460,7 @@ def add_rest_nodes_to_cluster(rest_nodeips, rest_nodeids, cluster_backplane='1/1
         # Connect to node
         node = CitrixADC(nsip, nspass=NSPASS)
         if not node.check_connection():
-            logging.error('Node {} not reachable'.format(nsip))
+            logger.error('Node {} not reachable'.format(nsip))
             exit()
 
         node.join_cluster(CLIP, NSPASS)
@@ -470,7 +476,7 @@ def add_rest_nodes_to_cluster(rest_nodeips, rest_nodeids, cluster_backplane='1/1
                 'Successfully added node id:{} ip:{} to cluster'.format(nodeID, nsip))
 
 def change_initial_password(nodeips, instids):
-    logging.debug('change_initial_password: {} :: {}'.format(nodeips, instids))
+    logger.debug('change_initial_password: {} :: {}'.format(nodeips, instids))
     for i in range(len(nodeips)):
         ip = nodeips[i]
         instID = instids[i]
@@ -516,8 +522,9 @@ if __name__ == "__main__":
     # find the CLIP, if not given
     # This scenario comes after adding atleast one node to cluster
     if CLIP is None:
+        logging.info("CLIP is not passed as agrument. Need to find CLIP")
         for nsip in all_ips:
-            logging.debug('all_ips: {}'.format(all_ips))
+            logger.debug('all_ips: {}'.format(all_ips))
             nodeObj = CitrixADC(nsip=nsip, nspass=NSPASS)
             if not nodeObj.check_connection():
                 continue
@@ -541,16 +548,16 @@ if __name__ == "__main__":
             if not check_clusternode_status(nsip):
                 nodes_not_added.append(nsip)
         if nodes_not_added:
-            logging.error('Nodes not added to cluster: {}'.format(nodes_not_added))
+            logger.error('Nodes not added to cluster: {}'.format(nodes_not_added))
         else:
-            logging.info('All nodes added to cluster and are in ACTIVE state')
+            logger.info('All nodes added to cluster and are in ACTIVE state')
 
         cc = CitrixADC(nsip=CLIP, nspass=NSPASS)
         cc.save_config()
         exit()
 
     if operation == "create" and len(node_ips) != len(inst_ids):
-        logging.error("Mismatch in nodeIPs and instanceIDs: nodeIPs:{} instanceIDs:{}".format(node_ips, inst_ids))
+        logger.error("Mismatch in nodeIPs and instanceIDs: nodeIPs:{} instanceIDs:{}".format(node_ips, inst_ids))
         exit()
 
 
@@ -663,6 +670,6 @@ if __name__ == "__main__":
 #         if not check_clusternode_status(nsip):
 #             nodes_not_added.append(nsip)
 #     if nodes_not_added:
-#         logging.error('Nodes not added to cluster: {}'.format(nodes_not_added))
+#         logger.error('Nodes not added to cluster: {}'.format(nodes_not_added))
 #     else:
-#         logging.info('All nodes added to cluster and are in ACTIVE state')
+#         logger.info('All nodes added to cluster and are in ACTIVE state')
