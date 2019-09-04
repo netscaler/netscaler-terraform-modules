@@ -37,13 +37,13 @@ variable "server_subnet_cidr_block" {
   description = "The CIDR block that will be used for the server subnet. Must be contained inside the VPC cidr block."
 }
 
-variable "modify_cluster" {
-  description = "True when modifying the cluster"
+variable "cco_id" {
+  description = "Number[0-32]: The node id of the cluster coordinator. If first run, provide 0, else provide the output of getCCOId.py script. "
 }
+
 # Citrix related variables
 variable "initial_num_nodes" {
-  description = "Initial number of nodes in the cluster"
-  default     = 1
+  description = "Number[0-32]: Initial number of nodes in the cluster"
 }
 variable "vpx_ami_map" {
   description = <<EOF
@@ -55,7 +55,7 @@ EOF
 
   default = {
     # Citrix ADC (formerly NetScaler) VPX Premium - 10 Mbps
-    "ap-south-1"     = "ami-07d603f6cb021fb9a" #"ami-0f08b89dee9fcf2a4" -- use this at the end
+    "ap-south-1"     = "ami-07d603f6cb021fb9a"
     "us-east-1"      = "ami-0c84f3d6e34c3e140"
     "us-east-2"      = "ami-0c8905815b16eaa5c"
     "ca-central-1"   = "077fe7a442acc5302"
@@ -80,8 +80,6 @@ EOF
 
   default = {
     # Citrix ADC (formerly NetScaler) VPX Premium - 10 Mbps
-    # "ap-south-1" = "ami-0aa7cf8bea71c424f"
-
     "us-east-1"      = "ami-05fe1f5fe69b3bfbe"
     "us-east-2"      = "ami-09ea854e40f5e0999"
     "us-west-1"      = "ami-09190150221a17211"
@@ -98,8 +96,6 @@ EOF
     "ap-southeast-1" = "ami-0ae77a3ed8ad9f591"
     "ap-northeast-2" = "ami-0aa7c6ee4316bc3b8"
     "ap-south-1"     = "ami-08d510acbf36be626"
-
-
   }
 }
 variable "ns_tenancy_model" {

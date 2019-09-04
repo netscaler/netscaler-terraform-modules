@@ -76,10 +76,10 @@ resource "aws_route_table_association" "client_rtb_association" {
   route_table_id = aws_route_table.client_rtb.id
 }
 
-resource "aws_main_route_table_association" "client_rtb_association" {
-  vpc_id         = aws_vpc.terraform.id
-  route_table_id = aws_route_table.client_rtb.id
-}
+#resource "aws_main_route_table_association" "client_rtb_association" {
+#  vpc_id         = aws_vpc.terraform.id
+#  route_table_id = aws_route_table.client_rtb.id
+#}
 
 resource "aws_eip" "nat_gw" {
   vpc = true
@@ -116,10 +116,10 @@ resource "aws_route_table_association" "mgmt_rtb_association" {
   route_table_id = aws_route_table.management_rtb.id
 }
 
-resource "aws_main_route_table_association" "management_rtb_association" {
-  vpc_id         = aws_vpc.terraform.id
-  route_table_id = aws_route_table.management_rtb.id
-}
+#resource "aws_main_route_table_association" "management_rtb_association" {
+#  vpc_id         = aws_vpc.terraform.id
+#  route_table_id = aws_route_table.management_rtb.id
+#}
 
 resource "aws_security_group" "inside_allow_all" {
   vpc_id      = aws_vpc.terraform.id
@@ -192,50 +192,32 @@ resource "aws_instance" "test_ubuntu" {
 
 }
 
-/*
-resource "null_resource" "add_nodes_serially" {
-  provisioner "local-exec" {
-    command = "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py ${
-      var.modify_cluster == false ? "--clip ${
-        element(tolist(aws_network_interface.management[0].private_ips), 0)
-        == aws_network_interface.management[0].private_ip
-        ? element(tolist(aws_network_interface.management[0].private_ips), 1) :
-        element(tolist(aws_network_interface.management[0].private_ips), 0)}" : ""} --node-ips ${join(" ",
-        aws_network_interface.management[*].private_ip)} --node-ids ${join(" ",
-        aws_instance.citrix_adc[*].index)} --inst-ids ${join(" ",
-      aws_instance.citrix_adc[*].id)} --backplane ${var.cluster_backplane} --tunnelmode ${
-      var.cluster_tunnelmode} --all-ips ${join(" ",
-    aws_network_interface.management[*].private_ip)}'"
-  }
-
-  depends_on = [aws_instance.citrix_adc]
-}
-*/
-
 resource "null_resource" "add_nodes_serially" {
   triggers = {
     build_number = "${timestamp()}"
   }
   provisioner "local-exec" {
-    command = "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py ${
-      var.modify_cluster == false ? "--clip ${
-        element(tolist(aws_network_interface.management[0].private_ips), 0)
-        == aws_network_interface.management[0].private_ip
-        ? element(tolist(aws_network_interface.management[0].private_ips), 1) :
-        element(tolist(aws_network_interface.management[0].private_ips), 0)}" : ""} --node-ips ${join(" ",
+    command = var.initial_num_nodes == 0 ? "true" : "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
+      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
+      == aws_network_interface.management[tonumber(var.cco_id)].private_ip
+      ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
+      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)} --node-ips ${join(" ",
         aws_network_interface.management[*].private_ip)} --node-ids ${join(" ",
         range(var.initial_num_nodes))} --inst-ids ${join(" ",
       aws_instance.citrix_adc[*].id)} --backplane ${var.cluster_backplane} --tunnelmode ${
-      var.cluster_tunnelmode} --all-ips ${join(" ",
+      var.cluster_tunnelmode}  --nspass ${var.nodes_password} --all-ips ${join(" ",
     aws_network_interface.management[*].private_ip)}'"
   }
 
-  depends_on = [aws_instance.citrix_adc]
+  depends_on = [null_resource.ubuntu_file_provisioner, aws_instance.citrix_adc, aws_network_interface.management]
 }
 
 resource "null_resource" "ubuntu_file_provisioner" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
   provisioner "local-exec" {
-    command = "sleep 40 && scp -o StrictHostKeyChecking=no -i ${var.private_key_path} cluster.py ubuntu@${aws_eip.test_ubuntu.public_ip}:/home/ubuntu/cluster.py"
+    command = var.initial_num_nodes == 0 ? "true" : "sleep 40 && scp -o StrictHostKeyChecking=no -i ${var.private_key_path} cluster.py ubuntu@${aws_eip.test_ubuntu.public_ip}:/home/ubuntu/cluster.py"
   }
 
   # lifecycle {
@@ -271,7 +253,7 @@ resource "aws_eip" "test_ubuntu" {
   network_interface = aws_network_interface.ubuntu_client.id
 
   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
-  depends_on = [aws_network_interface.ubuntu_client]
+  depends_on = [aws_instance.test_ubuntu]
 
   tags = {
     Name = "Ubuntu Public-Client EIP"
@@ -307,31 +289,24 @@ resource "aws_instance" "citrix_adc" {
     device_index         = 0
   }
 
-  depends_on = [null_resource.ubuntu_file_provisioner]
+  depends_on = [null_resource.ubuntu_file_provisioner, aws_instance.test_ubuntu, aws_eip.test_ubuntu]
 
-  iam_instance_profile = aws_iam_instance_profile.citrix_adc_cluster_instance_profile.name
+  iam_instance_profile = aws_iam_instance_profile.citrix_adc_cluster_instance_profile_1.name
 
   tags = {
     Name = format("CitrixADC Node %v", count.index)
   }
 
-  # provisioner "local-exec" {
-  #   command = "sleep ${count.index == 0 ? 60 : (var.modify_cluster == true ? 60 : 360)} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py ${
-  #     count.index == 0 ? "--clip ${
-  #       element(tolist(aws_network_interface.management[0].private_ips), 0)
-  #       == aws_network_interface.management[0].private_ip
-  #       ? element(tolist(aws_network_interface.management[0].private_ips), 1) :
-  #       element(tolist(aws_network_interface.management[0].private_ips), 0)}" : ""} --node-ips ${self.private_ip} --node-ids ${count.index} --inst-ids ${self.id} --backplane ${var.cluster_backplane} --tunnelmode ${var.cluster_tunnelmode} --nspass ${var.nodes_password} --all-ips ${join(" ",
-  #   aws_network_interface.management[*].private_ip)}'"
-  # }
-
-
-
   provisioner "local-exec" {
     when = "destroy"
-    command = count.index != 0 ? "ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --node-ips ${self.private_ip} --nspass ${var.nodes_password} --all-ips ${join(" ",
-    aws_network_interface.management[*].private_ip)}'" : "true"
+    command = " sleep ${15 * count.index} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
+      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
+      == aws_network_interface.management[tonumber(var.cco_id)].private_ip
+      ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
+      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)} --node-ips ${self.private_ip} --nspass ${var.nodes_password} --all-ips ${join(" ",
+    aws_network_interface.management[*].private_ip)}'"
   }
+
 
   lifecycle {
     create_before_destroy = true
@@ -340,9 +315,9 @@ resource "aws_instance" "citrix_adc" {
 
 
 
-resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
-  name = "citrix_adc_cluster_policy"
-  role = aws_iam_role.citrix_adc_cluster_role.name
+resource "aws_iam_role_policy" "citrix_adc_cluster_policy_1" {
+  name = "citrix_adc_cluster_policy_1"
+  role = aws_iam_role.citrix_adc_cluster_role_1.name
 
   policy = <<EOF
 {
@@ -376,8 +351,8 @@ resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
 EOF
 }
 
-resource "aws_iam_role" "citrix_adc_cluster_role" {
-  name = "citrix_adc_cluster_role"
+resource "aws_iam_role" "citrix_adc_cluster_role_1" {
+  name = "citrix_adc_cluster_role_1"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -401,10 +376,10 @@ EOF
 
 }
 
-resource "aws_iam_instance_profile" "citrix_adc_cluster_instance_profile" {
-  name = "citrix_adc_cluster_instance_profile"
+resource "aws_iam_instance_profile" "citrix_adc_cluster_instance_profile_1" {
+  name = "citrix_adc_cluster_instance_profile_1"
   path = "/"
-  role = aws_iam_role.citrix_adc_cluster_role.name
+  role = aws_iam_role.citrix_adc_cluster_role_1.name
 }
 
 
@@ -412,7 +387,7 @@ resource "aws_network_interface" "management" {
   count             = var.initial_num_nodes
   subnet_id         = aws_subnet.management.id
   security_groups   = [aws_security_group.inside_allow_all.id]
-  private_ips_count = count.index == 0 ? 1 : 0 # Create secondary IPs only for the 1st node. This secondary IP acts as Cluster IP
+  private_ips_count = count.index == tonumber(var.cco_id) ? 1 : 0 # Create secondary IPs only for the cluster node. This secondary IP acts as Cluster IP
 
   tags = {
     Name        = format("Terraform NS Management interface %v", count.index)
@@ -452,58 +427,3 @@ resource "aws_network_interface" "server" {
   }
 }
 
-# resource "aws_eip" "nsip" {
-#   count             = var.initial_num_nodes
-#   vpc               = true
-#   network_interface = element(aws_network_interface.management.*.id, count.index)
-
-#   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
-#   depends_on = [aws_instance.citrix_adc]
-
-#   tags = {
-#     Name = format("Terraform Public NSIP %v", count.index)
-#   }
-# }
-
-# resource "aws_eip" "client" {
-#   count             = var.initial_num_nodes
-#   vpc               = true
-#   network_interface = element(aws_network_interface.client.*.id, count.index)
-
-#   # Need to add explicit dependency to avoid binding to ENI when in an invalid state
-#   depends_on = [aws_instance.citrix_adc]
-
-#   tags = {
-#     Name = format("Terraform Public Data IP %v", count.index)
-#   }
-# }
-
-
-# # Null resource
-# resource "null_resource" "setup_first_cluster" {
-#   provisioner "local-exec" {
-#     environment = {
-#       NODE_PUBLIC_NSIP            = aws_eip.nsip.public_ip
-#       NODE_PRIVATE_NSIP           = element(aws_network_interface.management.private_ips.*, 0)
-#       NODE_SECONDARY_PRIVATE_NSIP = element(aws_network_interface.management.private_ips.*, 1)
-#       NODE_INSTANCE_ID            = aws_instance.citrix_adc.id
-#     }
-#     interpreter = ["bash"]
-#     command     = "setup_single_cluster.sh"
-#   }
-# }
-
-
-# resource "null_resource" "cluster" {
-
-#   provisioner "local-exec" {
-
-#   command = var.initial_num_nodes != 0 ? "sleep 60 && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
-#       element(tolist(aws_network_interface.management[0].private_ips),0)
-#      == aws_network_interface.management[0].private_ip 
-#     ? element(tolist(aws_network_interface.management[0].private_ips),1) : 
-#     element(tolist(aws_network_interface.management[0].private_ips),0)} --node-ips ${join(" ", 
-#     aws_network_interface.management[*].private_ip)} --inst-ids ${join(" ",
-#      aws_instance.citrix_adc[*].id)} --backplane ${var.cluster_backplane} --tunnelmode ${var.cluster_tunnelmode}'" : "true"
-#   }
-# }

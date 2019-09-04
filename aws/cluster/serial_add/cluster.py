@@ -26,7 +26,7 @@ logger.addHandler(fh)
 CLIP = ""
 NSPASS = 'nsroot'
 NODES = []
-MAX_RETRIES = 10
+MAX_RETRIES = 40
 
 
 def waitfor(seconds=2, reason=None):
@@ -315,8 +315,6 @@ class CitrixADC(HTTPNitro):
                               data=data)
         if result:
             logger.info('Successfully reboot {}'.format(self.nsip))
-            waitfor(
-                70, reason='Waiting for {} to come up after reboot'.format(self.nsip))
         else:
             logger.error('Could not reboot {}'.format(self.nsip))
             logger.error('Refer log file for more information')
@@ -367,7 +365,7 @@ def check_clusternode_status(nodeip):
     # login to cluster and check the status
     # Retry twice to reach
     for i in [1, 2]:
-        cc = CitrixADC(CLIP)
+        cc = CitrixADC(nsip=CLIP, nspass=NSPASS)
         if not cc.check_connection():
             if i == 1:
                 logging.debug('Trying again to connect to CLIP:{}'.format(CLIP))
@@ -399,7 +397,7 @@ def check_clusternode_status(nodeip):
                 if cnode_masterstate == 'ACTIVE':  # Is `Health` need to check up?
                     return True
                 else:
-                    waitfor(20, reason='Try: {}/{}. Waiting for node id:{} ip:{} to become ACTIVE'.format(
+                    waitfor(10, reason='Try: {}/{}. Waiting for node id:{} ip:{} to become ACTIVE'.format(
                         num_retries, MAX_RETRIES, cnode_id, cnode_ip))
 
     if num_retries == MAX_RETRIES:
@@ -415,7 +413,7 @@ def add_first_node_to_cluster(nodeip, backplane='1/1', tunnelmode='GRE'):
     state = 'ACTIVE'
     clusterInstanceID = 1  # TODO: need to take cluster instance ID as input
 
-    node = CitrixADC(nsip)
+    node = CitrixADC(nsip=nsip, nspass=NSPASS)
     if not node.check_connection():
         logger.error('Node {} not reachable'.format(nsip))
         exit()
@@ -425,6 +423,7 @@ def add_first_node_to_cluster(nodeip, backplane='1/1', tunnelmode='GRE'):
     node.enable_cluster_instance(clusterInstanceID)
     node.save_config()
     node.reboot()
+    waitfor(70, reason='Waiting for first node to reboot')
     if not check_clusternode_status(nodeip=nsip):
         logger.error(
             'Node id:{} ip:{} failed to add to the cluster'.format(nodeID, nsip))
@@ -446,7 +445,7 @@ def add_rest_nodes_to_cluster(rest_nodeips, rest_nodeids, cluster_backplane='1/1
         state = 'ACTIVE'
 
         # Connect to Cluster Coordinator
-        cc = CitrixADC(CLIP)
+        cc = CitrixADC(nsip=CLIP, nspass=NSPASS)
         if not cc.check_connection():
             logger.error('Node {} not reachable'.format(nsip))
             exit()
