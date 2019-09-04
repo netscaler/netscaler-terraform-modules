@@ -250,8 +250,14 @@ class CitrixADC(HTTPNitro):
             raise Exception
 
     def remove_cluster_node(self, nodeID):
-        result = self.do_delete(resource='clusternode',
+        result = None
+        try:
+            result = self.do_delete(resource='clusternode',
                                 id=str(nodeID))
+        except Exception as e:
+            logger.error('Unable to fetch response from the CLIP. Reason:{}'.format(str(e)))
+            return
+        
         if result:
             logger.info('Successfully removed cluster node {}'.format(nodeID))
         else:
