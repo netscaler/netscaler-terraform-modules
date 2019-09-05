@@ -79,7 +79,6 @@ AMI map for Ubuntu
 EOF
 
   default = {
-    # Citrix ADC (formerly NetScaler) VPX Premium - 10 Mbps
     "us-east-1"      = "ami-05fe1f5fe69b3bfbe"
     "us-east-2"      = "ami-09ea854e40f5e0999"
     "us-west-1"      = "ami-09190150221a17211"

@@ -193,11 +193,12 @@ resource "aws_instance" "test_ubuntu" {
 }
 
 resource "null_resource" "add_nodes_serially" {
+  count = (tonumber(var.initial_num_nodes) <= tonumber(var.cco_id)) ? 0 : 1
   triggers = {
     build_number = "${timestamp()}"
   }
   provisioner "local-exec" {
-    command = var.initial_num_nodes == 0 ? "true" : "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
+    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
       element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
       == aws_network_interface.management[tonumber(var.cco_id)].private_ip
       ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
@@ -217,7 +218,7 @@ resource "null_resource" "ubuntu_file_provisioner" {
     build_number = "${timestamp()}"
   }
   provisioner "local-exec" {
-    command = var.initial_num_nodes == 0 ? "true" : "sleep 40 && scp -o StrictHostKeyChecking=no -i ${var.private_key_path} cluster.py ubuntu@${aws_eip.test_ubuntu.public_ip}:/home/ubuntu/cluster.py"
+    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep 40 && scp -o StrictHostKeyChecking=no -i ${var.private_key_path} cluster.py ubuntu@${aws_eip.test_ubuntu.public_ip}:/home/ubuntu/cluster.py"
   }
 
   # lifecycle {
@@ -232,7 +233,7 @@ resource "null_resource" "save_clip_config" {
     build_number = "${timestamp()}"
   }
   provisioner "local-exec" {
-    command = "sleep 15 && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --save-config --all-ips ${join(" ",
+    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep 15 && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --save-config --all-ips ${join(" ",
     aws_network_interface.management[*].private_ip)} --nspass ${var.nodes_password} '"
   }
   depends_on = [aws_instance.citrix_adc, null_resource.add_nodes_serially]
@@ -309,7 +310,7 @@ resource "aws_instance" "citrix_adc" {
 
   provisioner "local-exec" {
     when = "destroy"
-    command = " sleep ${60 * count.index} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
+    command = " sleep ${60 * (count.index - tonumber(var.initial_num_nodes))} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
       element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
       == aws_network_interface.management[tonumber(var.cco_id)].private_ip
       ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :

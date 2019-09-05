@@ -583,6 +583,9 @@ if __name__ == "__main__":
     if current_node_dict:
         # CLIP is reachable, modify(add or delete nodes) the existing cluster
         if operation == "delete": # delete node
+            if len(current_node_dict) == 1:
+                logger.info('Deleting last node from the cluster')
+                exit()
             nodeid_to_delete = None
             nodeip_to_delete = node_ips[0]
             for node in current_node_dict:
