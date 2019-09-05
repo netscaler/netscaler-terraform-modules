@@ -1,10 +1,8 @@
 import json
 import logging
-import yaml
 import time
 import requests
 
-#from ansible.module_utils.six.moves.urllib.parse import parse_qs, urlencode, quote
 LOGFILE = __file__ + '.log'
 formatter = logging.Formatter('%(asctime)s: %(levelname)s - %(message)s')
 
@@ -565,19 +563,6 @@ if __name__ == "__main__":
         logger.error("Mismatch in nodeIPs and instanceIDs: nodeIPs:{} instanceIDs:{}".format(node_ips, inst_ids))
         exit()
 
-
-
-    # input_data = yaml.load(open("cluster-input.yaml"))
-    # logger.debug(json.dumps(input_data, indent=4))
-
-    # Populate the CLIP and NODES information to global variables
-    # try:
-    #     CLIP = input_data['CLUSTER_IP']
-    #     NODES = input_data['NODES']
-    # except KeyError as e:
-    #     logger.error('Exception occured while parsing the input: {}'.format(str(e)))
-    #     exit()
-
     # Check if the CLIP is already reachable
     current_node_dict = get_current_cluster_nodes()
     if current_node_dict:
@@ -604,60 +589,11 @@ if __name__ == "__main__":
             # assuming serial addition, new nodes will be added at the end always
             # so if there are 3 nodes, the new nodes will be from 4th index of the node_ips argument
             current_num_nodes = len(current_node_dict)
-            # current_node_ips = []
-            # for n in current_node_dict:
-            #     current_node_ips.append(n['ipaddress'])
 
             new_node_ips_to_add = node_ips[current_num_nodes:] # list(set(node_ips) - set(current_node_ips))
             new_node_ids_to_add = node_ids[current_num_nodes:]
             logger.info('Nodes to be added: {}'.format(new_node_ips_to_add))
             add_rest_nodes_to_cluster(new_node_ips_to_add, new_node_ids_to_add, backplane, tunnelmode)
-
-
-
-
-
-
-
-        # # current_node_ips = []
-        # # current_node_ids = []
-        # new_node_ids = []
-        # new_node_ips = []
-        # for n in current_node_dict:
-        #     current_node_ips.append(n['ipaddress'])
-        #     current_node_ids.append(n['nodeid'])
-
-        # for n in NODES:
-        #     new_node_ips.append(n['NSIP'])
-        #     new_node_ids.append(str(n['ID']))
-
-        # if len(current_node_dict) < len(NODES):
-        #     # TODO: Change the logic to (id, ip) tuple to ensure nodeid and nodeip wont mismatch
-        #     # TODO: try to do add and delete at the same time. Try not to have if-else separately
-        #     # add new nodes
-        #     node_ips_to_add = list(set(new_node_ips) - set(current_node_ips))
-        #     node_ids_to_add = list(set(new_node_ids) - set(current_node_ids))
-        #     logger.info('New node IPs to add: {}'.format(node_ips_to_add))
-        #     # form new nodes dictionary
-        #     node_dict_to_add = []
-        #     for i in range(len(node_ips_to_add)):
-        #         new_node = {}
-        #         new_node['NSIP'] = node_ips_to_add[i]
-        #         new_node['ID'] = node_ids_to_add[i]
-        #         node_dict_to_add.append(new_node)
-        #     logger.info('Nodes to be added: {}'.format(node_dict_to_add))
-        #     add_rest_nodes_to_cluster(node_dict_to_add)
-        # else:
-        #     # delete current nodes
-        #     node_ips_to_delete = list(
-        #         set(current_node_ips) - set(new_node_ips))
-        #     node_ids_to_delete = list(
-        #         set(current_node_ids) - set(new_node_ids))
-        #     logger.info('Node IPs to delete: {}'.format(node_ips_to_delete))
-        #     cc = CitrixADC(CLIP)
-        #     for nodeID in node_ids_to_delete:
-        #         cc.remove_cluster_node(nodeID)
-        #         cc.save_config()
 
     else:
         # TODO: there can be another reason where CLIP is not reacbale. Handle them
@@ -670,14 +606,3 @@ if __name__ == "__main__":
             if add_rest_nodes_to_cluster(node_ips[1:], node_ids[1:], backplane, tunnelmode):
                 logger.info(
                     'Successfully added nodes {} to cluster'.format(node_ips))
-
-# TODO: implement 
-# # check all node's status at last
-#     nodes_not_added = []
-#     for nsip in node_ips:
-#         if not check_clusternode_status(nsip):
-#             nodes_not_added.append(nsip)
-#     if nodes_not_added:
-#         logger.error('Nodes not added to cluster: {}'.format(nodes_not_added))
-#     else:
-#         logger.info('All nodes added to cluster and are in ACTIVE state')

@@ -186,6 +186,11 @@ resource "aws_instance" "test_ubuntu" {
     device_index         = 0
   }
 
+  network_interface {
+    network_interface_id = aws_network_interface.ubuntu_management.id
+    device_index         = 1
+  }
+
   tags = {
     Name = "test_ubuntu"
   }
@@ -265,11 +270,6 @@ resource "aws_network_interface" "ubuntu_management" {
   subnet_id       = aws_subnet.management.id
   security_groups = [aws_security_group.inside_allow_all.id]
 
-  attachment {
-    instance     = aws_instance.test_ubuntu.id
-    device_index = 1
-  }
-
   tags = {
     Name        = "Ubuntu Management ENI"
     Description = "Ubuntu Management ENI"
@@ -310,14 +310,13 @@ resource "aws_instance" "citrix_adc" {
 
   provisioner "local-exec" {
     when = "destroy"
-    command = " sleep ${60 * (count.index - tonumber(var.initial_num_nodes))} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
+    command = (tonumber(var.initial_num_nodes) == 0) ? "true" : "sleep ${60 * (count.index - tonumber(var.initial_num_nodes))} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
       element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
       == aws_network_interface.management[tonumber(var.cco_id)].private_ip
       ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
       element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)} --node-ips ${self.private_ip} --nspass ${var.nodes_password} --all-ips ${join(" ",
     aws_network_interface.management[*].private_ip)}'"
   }
-
 
   lifecycle {
     create_before_destroy = true
