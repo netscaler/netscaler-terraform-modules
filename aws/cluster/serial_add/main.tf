@@ -289,6 +289,16 @@ resource "aws_instance" "citrix_adc" {
     device_index         = 0
   }
 
+  network_interface {
+    network_interface_id = element(aws_network_interface.client.*.id, count.index)
+    device_index         = 1
+  }
+
+  network_interface {
+    network_interface_id = element(aws_network_interface.server.*.id, count.index)
+    device_index         = 2
+  }
+
   depends_on = [null_resource.ubuntu_file_provisioner, aws_instance.test_ubuntu, aws_eip.test_ubuntu]
 
   iam_instance_profile = aws_iam_instance_profile.citrix_adc_cluster_instance_profile_1.name
@@ -299,7 +309,7 @@ resource "aws_instance" "citrix_adc" {
 
   provisioner "local-exec" {
     when = "destroy"
-    command = " sleep ${15 * count.index} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
+    command = " sleep ${60 * count.index} && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --delete --clip ${
       element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
       == aws_network_interface.management[tonumber(var.cco_id)].private_ip
       ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
@@ -400,11 +410,6 @@ resource "aws_network_interface" "client" {
   subnet_id       = aws_subnet.client.id
   security_groups = [aws_security_group.inside_allow_all.id]
 
-  attachment {
-    instance     = element(aws_instance.citrix_adc.*.id, count.index)
-    device_index = 1
-  }
-
   tags = {
     Name        = format("Terraform NS Public-Client Interface %v", count.index)
     Description = format("Public-Client Interface for Citrix ADC %v", count.index)
@@ -415,11 +420,6 @@ resource "aws_network_interface" "server" {
   count           = var.initial_num_nodes
   subnet_id       = aws_subnet.server.id
   security_groups = [aws_security_group.inside_allow_all.id]
-
-  attachment {
-    instance     = element(aws_instance.citrix_adc.*.id, count.index)
-    device_index = 2
-  }
 
   tags = {
     Name        = format("Terraform NS Server Interface %v", count.index)
