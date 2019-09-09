@@ -1,10 +1,23 @@
 # Automating Citrix ADC Cluster - for CUSTOMERNAME
+- [Pre-requisities](#pre-requisities)
+- [Folder Structure](#folder-structure)
+  * [Terraform related files](#terraform-related-files)
+  * [Python script related files](#python-script-related-files)
+- [Topology](#topology)
+- [Input File `input.auto.tfvars`](#input-file-inputautotfvars)
+  * [Possible values for `ns_instance_type`](#possible-values-for-ns_instance_type)
+- [Assumptions](#assumptions)
+- [What does the Solution do](#what-does-the-solution-do)
+  * [Role of Terraform tool](#role-of-terraform-tool)
+  * [Role of `cluster.py` script](#role-of-clusterpy-script)
+  * [Role of `getCCOId.py` script](#role-of-getccoidpy-script)
 
 The below documentation provides an overview on the provisioning of Citrix ADC clustering using Terraform tool
 
 ## Pre-requisities
 1. Terraform v.12.0+
 2. Space for **two** EIPs in the aws_region
+3. python3
 
 
 ## Folder Structure
@@ -16,7 +29,10 @@ The below documentation provides an overview on the provisioning of Citrix ADC c
 
 ### Python script related files
 1. `cluster.py` - used to create and manage cluster. This file will be internally called by Terraform
-
+2. `getCCOId.py` - used to get the latest Cluster Coordinator Node ID. It also gets the current number of nodes present in the cluster.
+> **Always run `getCCOId.py` script to `refresh terraform`, before modifying cluster.**
+## Topology
+![Image of Cluster Topology](cluster-topology.jpg)
 
 ## Input File `input.auto.tfvars`
 // aws authentication
@@ -47,7 +63,7 @@ The below documentation provides an overview on the provisioning of Citrix ADC c
 
 // CitrixADC (node) related inputs
 
-**`ns_instance_type`**  =  "c4.8xlarge" //default: "m4.xlarge" -- Possible Values below
+**`ns_instance_type`**  =  "c4.8xlarge" //default: "m4.xlarge" -- [Possible values for `ns_instance_type`](#possible-values-for-ns_instance_type)
 
 **`ns_tenancy_model`**  =  "default"  # defalut | dedicated
 
@@ -63,9 +79,6 @@ The below documentation provides an overview on the provisioning of Citrix ADC c
 
 **`cluster_tunnel`**  =  "GRE"
 
-// Modify Cluster
-
-**`modify_cluster`** = false # `true` when modifying(adding more nodes or deleting current nodes) the cluster
 
 ### Possible values for `ns_instance_type`
 - t2.medium
@@ -89,12 +102,14 @@ The below documentation provides an overview on the provisioning of Citrix ADC c
 ## Assumptions
 1. The automation handles only 1 cluster for now
 2. All added nodes will go to `state=ACTIVE` by default
-3. Adding of nodes will take place **serially**
+3. Addition of nodes will take place **serially**
 
 ## What does the Solution do -
 There are two components involved.
-- Terraform Tool - which creates the *infrastructure* such as VPC, subnets, required number of CitrixADCs (nodes)
-- cluster.py script which helps in managing (add/update/delete) the cluster nodes
+- `Terraform` Tool - which creates the *infrastructure* such as VPC, subnets, required number of CitrixADCs (nodes)
+- `cluster.py` script which helps in managing (add/update/delete) the cluster nodes
+- `getCCOId.py` script gets the latest Cluster Coordinator Node ID. It also gets the current number of nodes present in the cluster.
+> The output of `getCCOId.py` script will be the input for any `day2+` related changes to the cluster.
 
 ### Role of Terraform tool
 - Creates a VPC - `Terraform VPC`
@@ -113,21 +128,8 @@ There are two components involved.
 ### Role of `cluster.py` script
 - Depending on the arguments, this script adds/updates/deletes the required number of nodes to/from the cluster.
 
-## Limitations, for now
-1. Deleting of nodes may have some issues. Please check `Known Issues` section
-2. Complete `terraform destroy` may have issues. Refer `Known Issues` for troubleshooting.
+### Role of `getCCOId.py` script
+- To run any `Day2+` related changes to cluster, the user require two inputs to `Terraform`.
+  1. `cco_id` - The latest Config Coordinator Node ID.
+  2. `initial_num_nodes` - The updated number of nodes the user wants to have in the cluster.
 
-## Support in the next release
-1. A `prefix` to all the resources created by Terraform so that there can be multiple deployment in the same aws region
-2. Taking input of `vpcid` and `subnets` if already present and use them while provisioning Citrix ADCs
-3. Stable nodes deletion support
-4. Stable `terraform destroy` support
-
-## Known Issues
-1. Deleting of nodes might have some issues, specially when more than half of the nodes are being removed from the cluster.
-2. `Error: InvalidParameterValue: cannot disassociate the main route table association rtbassoc-0a3627196e28efd35
-        status code: 400, request id: d30508a2-858e-4a0a-88ad-f2adece24ca9`
-**Solution**: This comes at the time of `terraform destroy`. Manually delete the VPC.
-3. Some random error while `terraform apply`
-**Solution**:  Delete `teraform.tfstate` file
-4. When the `cluster.py` script fails (due to an exception), even when the node is successfully added to the cluster, on the next run the terraform marks these instances as `tainted` and repalace these instances without removing these nodes from the cluster, hence we may have some extra nodes as `UNKNOWN` state.
