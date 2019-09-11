@@ -1,10 +1,10 @@
-######## AWS related resources
+######## AWS related resources related resources #########
+
 provider "aws" {
   region     = var.aws_region
   access_key = var.aws_access_key
   secret_key = var.aws_secret_key
 }
-
 
 resource "aws_vpc" "terraform" {
   cidr_block           = var.vpc_cidr_block
@@ -76,11 +76,6 @@ resource "aws_route_table_association" "client_rtb_association" {
   route_table_id = aws_route_table.client_rtb.id
 }
 
-#resource "aws_main_route_table_association" "client_rtb_association" {
-#  vpc_id         = aws_vpc.terraform.id
-#  route_table_id = aws_route_table.client_rtb.id
-#}
-
 resource "aws_eip" "nat_gw" {
   vpc = true
 
@@ -88,6 +83,7 @@ resource "aws_eip" "nat_gw" {
     Name = format("%v-NAT_GW EIP", var.prefix)
   }
 }
+
 resource "aws_nat_gateway" "management_nat_gw" {
   allocation_id = aws_eip.nat_gw.id
   subnet_id     = aws_subnet.client.id
@@ -115,11 +111,6 @@ resource "aws_route_table_association" "mgmt_rtb_association" {
   subnet_id      = aws_subnet.management.id
   route_table_id = aws_route_table.management_rtb.id
 }
-
-#resource "aws_main_route_table_association" "management_rtb_association" {
-#  vpc_id         = aws_vpc.terraform.id
-#  route_table_id = aws_route_table.management_rtb.id
-#}
 
 resource "aws_security_group" "inside_allow_all" {
   vpc_id      = aws_vpc.terraform.id
@@ -176,6 +167,7 @@ resource "aws_security_group" "outside_world" {
   }
 }
 
+########## Ubuntu JumpBox related resources ########
 resource "aws_instance" "test_ubuntu" {
   ami           = var.ubuntu_ami_map[var.aws_region]
   instance_type = "t2.micro"
@@ -194,54 +186,6 @@ resource "aws_instance" "test_ubuntu" {
   tags = {
     Name = format("%v-test_ubuntu", var.prefix)
   }
-
-}
-
-resource "null_resource" "add_nodes_serially" {
-  count = (tonumber(var.initial_num_nodes) <= tonumber(var.cco_id)) ? 0 : 1
-  triggers = {
-    build_number = "${timestamp()}"
-  }
-  provisioner "local-exec" {
-    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
-      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
-      == aws_network_interface.management[tonumber(var.cco_id)].private_ip
-      ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
-      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)} --node-ips ${join(" ",
-        aws_network_interface.management[*].private_ip)} --node-ids ${join(" ",
-        range(var.initial_num_nodes))} --inst-ids ${join(" ",
-      aws_instance.citrix_adc[*].id)} --backplane ${var.cluster_backplane} --tunnelmode ${
-      var.cluster_tunnelmode}  --nspass ${var.nodes_password} --all-ips ${join(" ",
-    aws_network_interface.management[*].private_ip)}'"
-  }
-
-  depends_on = [null_resource.ubuntu_file_provisioner, aws_instance.citrix_adc, aws_network_interface.management]
-}
-
-resource "null_resource" "ubuntu_file_provisioner" {
-  triggers = {
-    build_number = "${timestamp()}"
-  }
-  provisioner "local-exec" {
-    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep 40 && scp -o StrictHostKeyChecking=no -i ${var.private_key_path} cluster.py ubuntu@${aws_eip.test_ubuntu.public_ip}:/home/ubuntu/cluster.py"
-  }
-
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
-
-  depends_on = [aws_instance.test_ubuntu]
-}
-
-resource "null_resource" "save_clip_config" {
-  triggers = {
-    build_number = "${timestamp()}"
-  }
-  provisioner "local-exec" {
-    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep 15 && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --save-config --all-ips ${join(" ",
-    aws_network_interface.management[*].private_ip)} --nspass ${var.nodes_password} '"
-  }
-  depends_on = [aws_instance.citrix_adc, null_resource.add_nodes_serially]
 }
 
 resource "aws_network_interface" "ubuntu_client" {
@@ -276,10 +220,7 @@ resource "aws_network_interface" "ubuntu_management" {
   }
 }
 
-# NLB
-#
-
-# Citrix related resources
+##### CitrixADC (cluster node) related resources
 resource "aws_instance" "citrix_adc" {
   count         = var.initial_num_nodes
   ami           = var.vpx_ami_map[var.aws_region]
@@ -324,8 +265,6 @@ resource "aws_instance" "citrix_adc" {
     create_before_destroy = true
   }
 }
-
-
 
 resource "aws_iam_role_policy" "citrix_adc_cluster_policy" {
   name = format("%v-citrix_adc_cluster_policy", var.prefix)
@@ -394,7 +333,6 @@ resource "aws_iam_instance_profile" "citrix_adc_cluster_instance_profile" {
   role = aws_iam_role.citrix_adc_cluster_role.name
 }
 
-
 resource "aws_network_interface" "management" {
   count             = var.initial_num_nodes
   subnet_id         = aws_subnet.management.id
@@ -427,5 +365,49 @@ resource "aws_network_interface" "server" {
     Name        = format("%v-Terraform NS Server Interface %v", var.prefix, count.index)
     Description = format("Server Interface for Citrix ADC %v", count.index)
   }
+}
+
+######### Null Resources #####
+resource "null_resource" "add_nodes_serially" {
+  count = (tonumber(var.initial_num_nodes) <= tonumber(var.cco_id)) ? 0 : 1
+  triggers = {
+    build_number = "${timestamp()}"
+  }
+  provisioner "local-exec" {
+    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep  60  && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --clip ${
+      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)
+      == aws_network_interface.management[tonumber(var.cco_id)].private_ip
+      ? element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 1) :
+      element(tolist(aws_network_interface.management[tonumber(var.cco_id)].private_ips), 0)} --node-ips ${join(" ",
+        aws_network_interface.management[*].private_ip)} --node-ids ${join(" ",
+        range(var.initial_num_nodes))} --inst-ids ${join(" ",
+      aws_instance.citrix_adc[*].id)} --backplane ${var.cluster_backplane} --tunnelmode ${
+      var.cluster_tunnelmode}  --nspass ${var.nodes_password} --all-ips ${join(" ",
+    aws_network_interface.management[*].private_ip)}'"
+  }
+
+  depends_on = [null_resource.ubuntu_file_provisioner, aws_instance.citrix_adc, aws_network_interface.management]
+}
+
+resource "null_resource" "ubuntu_file_provisioner" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
+  provisioner "local-exec" {
+    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep 40 && scp -o StrictHostKeyChecking=no -i ${var.private_key_path} cluster.py ubuntu@${aws_eip.test_ubuntu.public_ip}:/home/ubuntu/cluster.py"
+  }
+
+  depends_on = [aws_instance.test_ubuntu]
+}
+
+resource "null_resource" "save_clip_config" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
+  provisioner "local-exec" {
+    command = tonumber(var.initial_num_nodes) == 0 ? "true" : "sleep 15 && ssh -i ${var.private_key_path} ubuntu@${aws_eip.test_ubuntu.public_ip} 'python3 cluster.py --save-config --all-ips ${join(" ",
+    aws_network_interface.management[*].private_ip)} --nspass ${var.nodes_password} '"
+  }
+  depends_on = [aws_instance.citrix_adc, null_resource.add_nodes_serially]
 }
 

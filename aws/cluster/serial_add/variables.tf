@@ -1,4 +1,12 @@
-# AWS Related variables
+##### General #######
+variable "prefix" {
+  description = "Prefix string for every created resource"
+}
+variable "initial_num_nodes" {
+  description = "Number[0-32]: Initial number of nodes in the cluster"
+}
+
+##### AWS Related variables ######
 variable "aws_access_key" {
   description = "The AWS access key"
 }
@@ -8,11 +16,9 @@ variable "aws_secret_key" {
 variable "ssh_pub_key" {
   description = "The public part of the SSH key you will use to access EC2 instances"
 }
-
 variable "private_key_path" {
   description = "Path to private key"
 }
-
 variable "aws_region" {
   description = "The AWS region to create things in"
   default     = "us-east-1"
@@ -23,9 +29,6 @@ variable "aws_availability_zone" {
 }
 variable "key_pair_name" {
   description = "SSH key name stored on AWS EC2 to access EC2 instances"
-}
-variable "prefix" {
-  description = "Prefix string for every created resource"
 }
 variable "vpc_cidr_block" {
   description = "The CIDR block that will be used for all needed subnets"
@@ -40,19 +43,18 @@ variable "server_subnet_cidr_block" {
   description = "The CIDR block that will be used for the server subnet. Must be contained inside the VPC cidr block."
 }
 
+# Citrix related variables
 variable "cco_id" {
   description = "Number[0-32]: The node id of the cluster coordinator. If first run, provide 0, else provide the output of getCCOId.py script. "
 }
-
-# Citrix related variables
-variable "initial_num_nodes" {
-  description = "Number[0-32]: Initial number of nodes in the cluster"
+variable "nodes_password" {
+  description = "General password for all the nodes"
 }
 variable "vpx_ami_map" {
   description = <<EOF
 
 AMI map for VPX
-Defaults to VPX Express 12.1-49.37
+Defaults Citrix ADC (formerly NetScaler) VPX Premium - 10 Mbps
 
 EOF
 
@@ -132,18 +134,11 @@ EOF
 
   default = "m4.xlarge"
 }
-
 variable "cluster_backplane" {
   description = "cluster backplane"
   default     = "1/1"
 }
-
 variable "cluster_tunnelmode" {
   description = "cluster tunnelmode"
   default     = "GRE"
-}
-
-variable "nodes_password" {
-  description = "General password for all the nodes"
-  default     = "nsroot"
 }
