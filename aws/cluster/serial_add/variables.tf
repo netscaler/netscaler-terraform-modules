@@ -24,6 +24,9 @@ variable "aws_availability_zone" {
 variable "key_pair_name" {
   description = "SSH key name stored on AWS EC2 to access EC2 instances"
 }
+variable "prefix" {
+  description = "Prefix string for every created resource"
+}
 variable "vpc_cidr_block" {
   description = "The CIDR block that will be used for all needed subnets"
 }
