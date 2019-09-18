@@ -45,10 +45,14 @@ output "management_aws_network_interface_private_ips" {
   value = aws_network_interface.management.*.private_ips
 }
 
+output "client_aws_network_interface_private_ips" {
+  value = aws_network_interface.client.*.private_ips
+}
+
+output "server_aws_network_interface_private_ips" {
+  value = aws_network_interface.server.*.private_ips
+}
+
 output "public_ip_aws_eip_test_ubuntu" {
   value = aws_eip.test_ubuntu.public_ip
 }
-
-# output "server_aws_network_interface_private_ip" {
-#   value = aws_network_interface.server.*.private_ip
-# }
