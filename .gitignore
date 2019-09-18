@@ -1,4 +1,3 @@
-    
 #  Local .terraform directories
 **/.terraform/*
 
@@ -9,7 +8,7 @@
 # .tfvars files
 *.tfvars
 
-# VSCode IDE
+# VSCode
 .vscode
 
 #
@@ -18,5 +17,5 @@ plan
 # TFVars
 *.tfvars
 
-# Temp directory, if any
+# Temp directory
 temp
