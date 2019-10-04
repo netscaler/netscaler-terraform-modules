@@ -65,3 +65,17 @@ The following files are related to the provider configuration
 
 * `provider.tf`: AWS provider configuration.
 * `provider_variables.tf`: Input variables for the AWS provider.
+
+## Licensing
+
+There is a choice of licensing options for the provisioned Citrix ADC.
+
+You can copy a subdirectory's files from the `licensing` directory to
+apply a license mode.
+
+The available licensing modes are `CICO`, `Pooled` and `vCPU`.
+
+For more info on Citrix ADC licensing see this [link](https://docs.citrix.com/en-us/citrix-adc/13/licensing.html).
+
+All of these require the Citrix ADC to be able to communicate with a Citrix ADM
+which will act as the license server.
