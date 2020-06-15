@@ -94,32 +94,6 @@ resource "aws_main_route_table_association" "TR_main_route" {
   route_table_id = aws_route_table.main_rt_table.id
 }
 
-resource "aws_default_security_group" "default" {
-  vpc_id = aws_vpc.terraform.id
-
-  tags = {
-    Name = "Terraform Default-Security-Group"
-  }
-}
-
-resource "aws_security_group_rule" "default_ingress" {
-  type                     = "ingress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = aws_default_security_group.default.id
-  security_group_id        = aws_default_security_group.default.id
-}
-
-resource "aws_security_group_rule" "default_egress" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_default_security_group.default.id
-}
-
 resource "aws_security_group" "management" {
   vpc_id      = aws_vpc.terraform.id
   name        = "Terraform management"
@@ -162,6 +136,13 @@ resource "aws_security_group" "client" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = concat([var.controlling_subnet], aws_subnet.client.*.cidr_block)
   }
 
   egress {
