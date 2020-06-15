@@ -42,11 +42,6 @@ output "server_subnet_id" {
   value       = aws_subnet.server.id
 }
 
-output "default_security_group_id" {
-  description = "Default security group."
-  value       = aws_default_security_group.default.id
-}
-
 output "management_security_group_id" {
   description = "Security group id for the management interfaces."
   value       = aws_security_group.management.id
