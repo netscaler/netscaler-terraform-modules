@@ -187,6 +187,12 @@ generator_list.append({
     'us-east-1-ami-id': 'ami-026259ffdab87433d',
 })
 
+generator_list = []
+generator_list.append({
+    'filename': '13.0-52.24_customerlicensed.auto.tfvars.json',
+    'us-east-1-ami-id': 'ami-0bb96d1f8f79db909',
+})
+
 
 
 aws_region_names = []
