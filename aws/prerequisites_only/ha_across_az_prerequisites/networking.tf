@@ -100,31 +100,6 @@ resource "aws_main_route_table_association" "TR_main_route" {
   route_table_id = aws_route_table.main_rt_table.id
 }
 
-resource "aws_default_security_group" "default" {
-  vpc_id = aws_vpc.terraform.id
-
-  tags = {
-    Name = "Terraform Default-Security-Group"
-  }
-}
-
-resource "aws_security_group_rule" "default_ingress" {
-  type                     = "ingress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = aws_default_security_group.default.id
-  security_group_id        = aws_default_security_group.default.id
-}
-
-resource "aws_security_group_rule" "default_egress" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_default_security_group.default.id
-}
 
 resource "aws_security_group" "management" {
   vpc_id      = aws_vpc.terraform.id
@@ -135,14 +110,6 @@ resource "aws_security_group" "management" {
     from_port = 0
     to_port   = 0
     protocol  = "-1"
-    # TF-UPGRADE-TODO: In Terraform v0.10 and earlier, it was sometimes necessary to
-    # force an interpolation expression to be interpreted as a list by wrapping it
-    # in an extra set of list brackets. That form was supported for compatibilty in
-    # v0.11, but is no longer supported in Terraform v0.12.
-    #
-    # If the expression in the following list itself returns a list, remove the
-    # brackets to avoid interpretation as a list of lists. If the expression
-    # returns a single list item then leave it as-is and remove this TODO comment.
     cidr_blocks = concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
   }
 
