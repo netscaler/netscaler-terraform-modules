@@ -44,15 +44,28 @@ resource "aws_instance" "ubuntu" {
   count = var.backend_services_count
 }
 
+resource "null_resource" "wait_period" {
+  provisioner "local-exec" {
+    command = "sleep ${var.wait_period}"
+  }
+  depends_on = [
+    aws_network_interface.server_data,
+    aws_instance.ubuntu,
+  ]
+}
+
 resource "null_resource" "networking_setup" {
   connection {
     host = element(aws_instance.ubuntu.*.public_ip, count.index)
     user = "ubuntu"
+    # Should be the private key corresponding to the one used for creating the ubuntu node
+    private_key = file(var.private_ssh_key_path)
   }
 
   depends_on = [
     aws_network_interface.server_data,
     aws_instance.ubuntu,
+    null_resource.wait_period,
   ]
   provisioner "remote-exec" {
     inline = [

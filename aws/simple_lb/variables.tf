@@ -86,4 +86,13 @@ variable "ubuntu_ami_map" {
     type = map(string)
 }
 
-variable aws_ssh_key_name {}
+variable "aws_ssh_key_name" {}
+
+variable "wait_period" {
+  type = number
+  default = 120
+}
+
+variable "private_ssh_key_path" {
+  default = "~/.ssh/id_rsa"
+}
