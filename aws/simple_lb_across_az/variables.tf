@@ -85,9 +85,22 @@ variable "lbvserver_name" {
   default     = "vserver1"
 }
 
-variable "server_subnets_cidr_block" {
+variable "server_subnet_cidr_blocks" {
   description = "Server subnet cidr blocks."
   type        = list(string)
 }
 
-variable aws_ssh_key_name {}
+variable "aws_ssh_key_name" {}
+
+variable "wait_period" {
+  type = number
+  default = 120
+}
+
+variable "private_ssh_key_path" {
+  default = "~/.ssh/id_rsa"
+}
+
+variable "ubuntu_ami_map" {
+    type = map(string)
+}
