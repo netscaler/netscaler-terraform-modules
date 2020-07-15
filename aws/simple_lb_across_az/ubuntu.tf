@@ -41,7 +41,7 @@ resource "aws_instance" "ubuntu" {
     Name = format("Terraform Service Node %d", count.index)
   }
 
-  count = var.count
+  count = var.num_instances
 }
 
 resource "null_resource" "networking_setup" {
@@ -75,7 +75,7 @@ resource "null_resource" "networking_setup" {
       "sudo systemctl restart apache2",
     ]
   }
-  count = var.count
+  count = var.num_instances
 }
 
 resource "aws_network_interface" "server_management" {
@@ -87,7 +87,7 @@ resource "aws_network_interface" "server_management" {
     Name = format("Terraform Ubuntu Management %d", count.index)
   }
 
-  count = var.count
+  count = var.num_instances
 }
 
 resource "aws_network_interface" "server_data" {
@@ -103,5 +103,5 @@ resource "aws_network_interface" "server_data" {
     device_index = 1
   }
 
-  count = var.count
+  count = var.num_instances
 }

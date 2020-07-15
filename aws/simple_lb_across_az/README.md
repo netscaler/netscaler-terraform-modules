@@ -25,7 +25,7 @@ Furthermore this load balancing should continue to work correctly after an HA fa
 ## Configuration files
 
 * provider\_aws.tf: AWS provider configuration
-* provider\_netscaler.tf: Netscaler provider configuration
+* provider\_citrixadc.tf: Netscaler provider configuration
 * ubuntu.tf: Setup for the two ubuntu linux nodes
 * servicegroup.tf: Setup for the Citrix ADC servicegroup
 * variables.tf: Input variables

@@ -57,8 +57,8 @@ variable "instance_id" {
 }
 
 # Services configuration
-variable "count" {
-  description = "The count of backend services"
+variable "num_instances" {
+  description = "The number of backend services"
   default     = 2
 }
 
