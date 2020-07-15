@@ -21,3 +21,19 @@ The citrixadc terraform provider repository can be found [here](https://github.c
 * `lbvserver.tf`: Setup for the Citrix ADC load balancing configuration.
 * `variables.tf`: Input variables. These should be populated with values taken from the Citrix ADC deployment.
 * `outputs.tf`: Output variables. They contain the management ips of the Ubuntu nodes.
+
+
+## Backend service manual configuration
+
+The scripts contain a `null_resource` which will configure
+the network interface of each backend ubuntu node and
+also launch the Apache web server so that backend services
+are registered as up from the citrix ADC SNIP address.
+
+If for some reason the configuration fails here is the list of the
+steps to apply manually to each ubuntu node.
+
+* Add ip adddress to eth1 interface `sudo ip addr add dev eth1 <eth1_address>/24`
+* Enable interface `sudo ip link set eth1 up`
+* Install apache web server `sudo apt update && sudo apt install apache2`
+* Optional: add custom index page to each ubuntu node `sudo echo "Hello from backend server <node_number>" > /var/www/html/index.html`

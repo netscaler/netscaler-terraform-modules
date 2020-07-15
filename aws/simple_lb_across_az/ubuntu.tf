@@ -28,7 +28,7 @@
 ########################################################################################
 
 resource "aws_instance" "ubuntu" {
-  ami           = "ami-0883141bc92a74917"
+  ami           = var.ubuntu_ami_map[var.aws_region]
   instance_type = "t2.micro"
   key_name      = var.aws_ssh_key_name
 
@@ -44,15 +44,29 @@ resource "aws_instance" "ubuntu" {
   count = var.num_instances
 }
 
+resource "null_resource" "wait_period" {
+  provisioner "local-exec" {
+    command = "sleep ${var.wait_period}"
+  }
+  depends_on = [
+    aws_network_interface.server_data,
+    aws_instance.ubuntu,
+  ]
+}
+
 resource "null_resource" "networking_setup" {
   connection {
     host = element(aws_instance.ubuntu.*.public_ip, count.index)
     user = "ubuntu"
+
+    # Should be the private key corresponding to the one used for creating the ubuntu node
+    private_key = file(var.private_ssh_key_path)
   }
 
   depends_on = [
     aws_network_interface.server_data,
     aws_instance.ubuntu,
+    null_resource.wait_period,
   ]
   provisioner "remote-exec" {
     inline = [
@@ -63,8 +77,8 @@ resource "null_resource" "networking_setup" {
       "sudo ip link set eth1 up",
       format(
         "sudo ip route add %v via %v",
-        var.server_subnets_cidr_block[count.index == 0 ? 1 : 0],
-        cidrhost(var.server_subnets_cidr_block[count.index], 1),
+        var.server_subnet_cidr_blocks[count.index == 0 ? 1 : 0],
+        cidrhost(var.server_subnet_cidr_blocks[count.index], 1),
       ),
       "sudo apt update -y",
       "sudo apt install -y apache2",

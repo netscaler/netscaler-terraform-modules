@@ -81,5 +81,5 @@ c4.8xlarge
 EOF
 
 
-default = "m4.large"
+default = "c4.large"
 }

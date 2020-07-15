@@ -44,9 +44,24 @@ Furthermore this load balancing should continue to work correctly after an HA fa
 * `server_security_group_id`: Security group id for the server interfaces.
 * `server_subnet_ids`: Subnet ids for the server interfaces.
 * `lbvserver_name`: Name of the lb vserver.
-* `server_subnets_cidr_block`: Server subnet cidr blocks.
+* `server_subnet_cidr_blocks`: Server subnet cidr blocks.
 
 ## Output variables
 
 * `management_ips`: The management ip addresses.
 * `service_ips`: The service ip addresses.
+
+## Backend service manual configuration
+
+The scripts contain a `null_resource` which will configure
+the network interface of each backend ubuntu node and
+also launch the Apache web server so that backend services
+are registered as up from the citrix ADC SNIP address.
+
+If for some reason the configuration fails here is the list of the
+steps to apply manually to each ubuntu node.
+
+* Add ip adddress to eth1 interface `sudo ip addr add dev eth1 <eth1_address>/24`
+* Enable interface `sudo ip link set eth1 up`
+* Install apache web server `sudo apt update && sudo apt install apache2`
+* Optional: add custom index page to each ubuntu node `sudo echo "Hello from backend server <node_number>" > /var/www/html/index.html`
