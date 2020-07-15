@@ -30,7 +30,7 @@
 resource "aws_instance" "ubuntu" {
   ami           = var.ubuntu_ami_map[var.aws_region]
   instance_type = "t2.micro"
-  key_name      = "georgen"
+  key_name      = var.aws_ssh_key_name
 
   network_interface {
     network_interface_id = element(aws_network_interface.server_management.*.id, count.index)

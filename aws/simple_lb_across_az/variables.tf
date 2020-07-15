@@ -89,3 +89,5 @@ variable "server_subnets_cidr_block" {
   description = "Server subnet cidr blocks."
   type        = list(string)
 }
+
+variable aws_ssh_key_name {}

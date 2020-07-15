@@ -85,3 +85,5 @@ variable "server_subnet_id" {
 variable "ubuntu_ami_map" {
     type = map(string)
 }
+
+variable aws_ssh_key_name {}
