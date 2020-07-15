@@ -27,7 +27,7 @@
 #
 ########################################################################################
 
-resource "netscaler_servicegroup" "ubuntu_servers" {
+resource "citrixadc_servicegroup" "ubuntu_servers" {
   servicegroupname = "terraform_test_servicegroup"
   lbvservers       = [var.lbvserver_name]
   servicetype      = "HTTP"
