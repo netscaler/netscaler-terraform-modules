@@ -1,0 +1,12 @@
+# Uncomment and change values as needed
+
+location = "West Europe"
+
+virtual_network_address_space = "10.22.0.0/16"
+
+management_subnet_address_prefix = "10.22.1.0/24"
+client_subnet_address_prefix = "10.22.2.0/24"
+server_subnet_address_prefix = "10.22.3.0/24"
+
+adc_admin_password = "VerySecret1234"
+controlling_subnet = "1.2.3.4/32"
