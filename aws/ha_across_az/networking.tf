@@ -107,9 +107,9 @@ resource "aws_security_group" "management" {
   description = "Allow everything from within the management network and the controlling node."
 
   ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = concat([var.controlling_subnet], aws_subnet.management.*.cidr_block)
   }
 

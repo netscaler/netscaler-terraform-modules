@@ -36,8 +36,13 @@ resource "null_resource" "setup_ha_pair" {
       SECONDARY_NODE_PRIVATE_NSIP = element(aws_network_interface.management.*.private_ip, 1)
       PRIMARY_NODE_INSTANCE_ID    = element(aws_instance.citrix_adc.*.id, 0)
       SECONDARY_NODE_INSTANCE_ID  = element(aws_instance.citrix_adc.*.id, 1)
+      WAIT_PERIOD                 = var.initial_wait_sec
+      NEW_PASSWORD                = var.new_password
+      DO_RESET                    = var.reset_password
     }
     interpreter = ["bash"]
     command     = "setup_ha_nitro.sh"
   }
+
+  depends_on = [aws_instance.citrix_adc]
 }
