@@ -19,7 +19,7 @@ is contained in the following files
 * `networking_outputs.tf`: definition of output variables related to the networking configuration.
 
 
-## Citrix ADC confguration
+## Citrix ADC configuration
 
 The Citrix ADC instance is deployed as a single instance with 3 separate
 NICs each in a separate subnet with its own security groups.
@@ -40,8 +40,22 @@ to this network and be accessible to Citrix ADC through its SNIP.
 The configuration files used are the following
 
 * `citrix_adc.tf`: Citrix ADC instance configuration.
-* `citrix_adc_variables.tf`: Input variables for Citrix ADC cofnfiguration
+* `citrix_adc_variables.tf`: Input variables for Citrix ADC configuration
 * `citrix_adc_outputs.tf`: Output variables for Citrix ADC.
+
+
+### Default password reset
+
+Depending on the Citrix ADC version used there may be a policy to enforce the
+default password change before first login or use of NITRO API.
+
+This can be done interactively on first login where the ADC will require a new password.
+
+There is also the option to do this operation with NITRO API.
+The scripts provide this option.
+
+The input variable `reset_password` controls whether this will take place.
+The input variable `new_password` holds the value for the new password.
 
 
 ## SSH keypair

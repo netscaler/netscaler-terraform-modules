@@ -106,72 +106,72 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "citrix_adc_ha_instance_profile" {
-name = "citrix_adc_ha_instance_profile"
-path = "/"
-role = aws_iam_role.citrix_adc_ha_role.name
+  name = "citrix_adc_ha_instance_profile"
+  path = "/"
+  role = aws_iam_role.citrix_adc_ha_role.name
 }
 
 resource "aws_network_interface" "management" {
-subnet_id       = aws_subnet.management.id
-security_groups = [aws_security_group.management.id]
+  subnet_id       = aws_subnet.management.id
+  security_groups = [aws_security_group.management.id]
 
-tags = {
-Name = format("Citrix ADC Management Interface HA Node %v", count.index)
-}
+  tags = {
+    Name = format("Citrix ADC Management Interface HA Node %v", count.index)
+  }
 
-count = 2
+  count = 2
 }
 
 resource "aws_network_interface" "client" {
-subnet_id       = aws_subnet.client.id
-security_groups = [aws_security_group.client.id]
+  subnet_id       = aws_subnet.client.id
+  security_groups = [aws_security_group.client.id]
 
-attachment {
-instance     = element(aws_instance.citrix_adc.*.id, 0)
-device_index = 1
-}
+  attachment {
+    instance     = element(aws_instance.citrix_adc.*.id, 0)
+    device_index = 1
+  }
 
-tags = {
-Name = "Citrix ADC Client Interface"
-}
+  tags = {
+    Name = "Citrix ADC Client Interface"
+  }
 }
 
 resource "aws_network_interface" "server" {
-subnet_id       = aws_subnet.server.id
-security_groups = [aws_security_group.server.id]
+  subnet_id       = aws_subnet.server.id
+  security_groups = [aws_security_group.server.id]
 
-attachment {
-instance     = element(aws_instance.citrix_adc.*.id, 0)
-device_index = 2
-}
+  attachment {
+    instance     = element(aws_instance.citrix_adc.*.id, 0)
+    device_index = 2
+  }
 
-tags = {
-Name = "Citrix ADC Server Interface"
-}
+  tags = {
+    Name = "Citrix ADC Server Interface"
+  }
 }
 
 resource "aws_eip" "nsip" {
-vpc               = true
-network_interface = element(aws_network_interface.management.*.id, count.index)
+  vpc               = true
+  network_interface = element(aws_network_interface.management.*.id, count.index)
 
-# Need to add explicit dependency to avoid binding to ENI when in an invalid state
-depends_on = [aws_instance.citrix_adc]
+  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
+  depends_on = [aws_instance.citrix_adc]
 
-tags = {
-Name = format("Citrix ADC NSIP HA Node %v", count.index)
-}
+  tags = {
+    Name = format("Citrix ADC NSIP HA Node %v", count.index)
+  }
 
-count = 2
+  count = 2
 }
 
 resource "aws_eip" "client" {
-vpc               = true
-network_interface = aws_network_interface.client.id
+  vpc               = true
+  network_interface = aws_network_interface.client.id
 
-# Need to add explicit dependency to avoid binding to ENI when in an invalid state
-depends_on = [aws_instance.citrix_adc]
+  # Need to add explicit dependency to avoid binding to ENI when in an invalid state
+  depends_on = [aws_instance.citrix_adc]
 
-tags = {
-Name = "Terraform Public Data IP"
-}
+  tags = {
+    Name = "Terraform Public Data IP"
+  }
 }

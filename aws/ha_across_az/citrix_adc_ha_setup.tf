@@ -46,9 +46,13 @@ resource "null_resource" "setup_ha_pair" {
       IPSET_NAME                   = var.ipset_name
       LBVSERVER_NAME               = var.lbvserver_name
       INITIAL_WAIT_SEC             = var.initial_wait_sec
+      NEW_PASSWORD                 = var.new_password
+      DO_RESET                     = var.reset_password
     }
 
     interpreter = ["bash"]
     command     = "setup_ha_pair.sh"
   }
+
+  depends_on = [aws_instance.citrix_adc]
 }

@@ -48,7 +48,38 @@ curl \
 https://$1/nitro/v1/config/nsconfig?action=save
 }
 
-sleep 60
+wait_for_adc() {
+    sleep ${WAIT_PERIOD}
+}
+
+reset_password() {
+# $1 nsip
+# $2 old password
+# $3 new password
+curl \
+-H "Content-Type: application/json" \
+-d "{\"login\": { \"username\": \"nsroot\", \"password\": \"${2}\", \"new_password\": \"${3}\"}}" \
+-k \
+https://${1}/nitro/v1/config/login
+}
+
+wait_for_adc
+
+if [[ $DO_RESET == "true" ]] ; then
+
+reset_password $PRIMARY_NODE_PUBLIC_NSIP $PRIMARY_NODE_INSTANCE_ID $NEW_PASSWORD
+reset_password $SECONDARY_NODE_PUBLIC_NSIP $SECONDARY_NODE_INSTANCE_ID $NEW_PASSWORD
+sleep 10
+
+add_ha_node $PRIMARY_NODE_PUBLIC_NSIP $NEW_PASSWORD $SECONDARY_NODE_PRIVATE_NSIP
+sleep 5
+
+add_ha_node $SECONDARY_NODE_PUBLIC_NSIP $NEW_PASSWORD $PRIMARY_NODE_PRIVATE_NSIP
+sleep 5
+
+save_config $PRIMARY_NODE_PUBLIC_NSIP $NEW_PASSWORD
+
+else
 
 add_ha_node $PRIMARY_NODE_PUBLIC_NSIP $PRIMARY_NODE_INSTANCE_ID $SECONDARY_NODE_PRIVATE_NSIP
 
@@ -59,3 +90,4 @@ add_ha_node $SECONDARY_NODE_PUBLIC_NSIP $SECONDARY_NODE_INSTANCE_ID $PRIMARY_NOD
 sleep 5
 
 save_config $PRIMARY_NODE_PUBLIC_NSIP $PRIMARY_NODE_INSTANCE_ID
+fi

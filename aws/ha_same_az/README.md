@@ -106,7 +106,7 @@ Server subnet is accessible only from within the server subnet on all ports.
 
 Creates the pair of ADC VPX instances that are used to setup the high availability pair.
 
-Note that asssociations between resources is by the index of the resource.
+Note that associations between resources is by the index of the resource.
 
 That means if an input variable is a list the first item refers to the first VPX of the pair
 and the second item refers to the second VPX of the pair.
@@ -116,6 +116,8 @@ networking interfaces setup.
 
 At the end of the script the two instances will be independent of each other.
 High availability configuration is handled by a subsequent configuration file.
+
+Options for default password rest are also present.
 
 #### Configuration files
 
@@ -127,16 +129,27 @@ High availability configuration is handled by a subsequent configuration file.
 
 * `vpx_ami_map`: AMI map for VPX.
 * `ns_instance_type`: EC2 instance type.
+* `reset_password`: Set to `true` for default password reset.
+* `new_password`: The new password.
+* `initial_wait_sec`: Delay before starting the setup scripts.
 
 #### Output variables
 
 * `nsips`: List of the public IP addresses assigned to the management interfaces.
 * `client_ip`: IP address which clients on the data plain will use to access backend services.
-* `vip`: The private VIP address assinged to the client subnet interface of the primary node.
+* `vip`: The private VIP address assigned to the client subnet interface of the primary node.
 * `snip`: The private IP addresses assigned to the server subnet interface.
 * `instance_ids`: List of the VPX instances ids.
 * `private_nsips`: List of the private IP addresses assigned to the management interfaces.
 
+### Default password reset
+
+Depending on the ADC version there may exist a policy that will force the
+default password to change.
+
+Before this operation no NITRO API call can succeed.
+
+This operation can be turned on or off by the `reset_password` variable.
 
 ### High availability setup
 

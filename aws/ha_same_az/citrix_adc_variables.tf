@@ -39,18 +39,18 @@ EOF
   default = {
     "ap-northeast-1" = "ami-02454e34c1d7d6b22"
     "ap-northeast-2" = "ami-0fa0efa416deb27c1"
-    "ap-south-1" = "ami-0fde08f60b42ea96f"
+    "ap-south-1"     = "ami-0fde08f60b42ea96f"
     "ap-southeast-1" = "ami-0803c80c209abd277"
     "ap-southeast-2" = "ami-01d523722c729c948"
-    "ca-central-1" = "ami-0ee43001be430451d"
-    "eu-central-1" = "ami-09c314e7d378b3ab7"
-    "eu-west-1" = "ami-03d2a8e34f015d104"
-    "eu-west-2" = "ami-039541dfcf995a477"
-    "sa-east-1" = "ami-063eefb0247cd422d"
-    "us-east-1" = "ami-021d54e00907f90cd"
-    "us-east-2" = "ami-0619cf1188dcd2ec1"
-    "us-west-1" = "ami-00fe4feee9f9b37e2"
-    "us-west-2" = "ami-0cb7a2b575cc622c8"
+    "ca-central-1"   = "ami-0ee43001be430451d"
+    "eu-central-1"   = "ami-09c314e7d378b3ab7"
+    "eu-west-1"      = "ami-03d2a8e34f015d104"
+    "eu-west-2"      = "ami-039541dfcf995a477"
+    "sa-east-1"      = "ami-063eefb0247cd422d"
+    "us-east-1"      = "ami-021d54e00907f90cd"
+    "us-east-2"      = "ami-0619cf1188dcd2ec1"
+    "us-west-1"      = "ami-00fe4feee9f9b37e2"
+    "us-west-2"      = "ami-0cb7a2b575cc622c8"
   }
 }
 
@@ -81,5 +81,19 @@ c4.8xlarge
 EOF
 
 
-default = "m4.xlarge"
+  default = "m4.xlarge"
+}
+
+variable "reset_password" {
+  description = "Set this to true for first time password reset operation."
+  type        = bool
+}
+
+variable "new_password" {
+  description = "The new ADC password that will replace the default one on both ADC instances. Applicable only when reset_password variable is set to `true`"
+}
+
+variable "initial_wait_sec" {
+  description = "Time period to wait to start ha setup after ADC creation. Should be enough for bootstrap scripts to have finished execution."
+  default     = 120
 }

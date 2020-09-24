@@ -103,7 +103,7 @@ Server subnets are accessible only from within the server subnets on all ports.
 
 Creates the pair of ADC VPX instances that are used to setup the high availability pair.
 
-Note that asssociations between resources is by the index of the resource.
+Note that associations between resources is by the index of the resource.
 
 That means if an input variable is a list the first item refers to the first VPX of the pair
 and the second item refers to the second VPX of the pair.
@@ -124,15 +124,27 @@ High availability configuration is handled by a subsequent configuration file.
 
 * `vpx_ami_map`: AMI map for VPX.
 * `ns_instance_type`: EC2 instance type.
+* `reset_password`: Set to `true` for default password reset.
+* `new_password`: The new password.
 
 #### Output variables
 
 * `nsips`: List of the public IP addresses assigned to the management interfaces.
 * `client_ip`: IP address which clients on the data plain will use to access backend services.
-* `private_vips`: List of the private IP addresses assinged to the client subnet interfaces.
+* `private_vips`: List of the private IP addresses assigned to the client subnet interfaces.
 * `snips`: List of the private IP addresses assigned to the server subnet interfaces.
 * `instance_ids`: List of the VPX instances ids.
 * `private_nsips`: List of the private IP addresses assigned to the management interfaces.
+
+
+### Default password reset
+
+Depending on the ADC version there may exist a policy that will force the
+default password to change.
+
+Before this operation no NITRO API call can succeed.
+
+This operation can be turned on or off by the `reset_password` variable.
 
 
 ### High availability setup
