@@ -1,7 +1,8 @@
 # AWS automation scripts
 
-This folder contains terraform configuration scripts to
-deploy Citrix ADC on AWS in various deployment scenarios.
+This folder contains terraform configuration scripts to deploy Citrix ADC on AWS in various deployment scenarios
+
+[Here](https://www.youtube.com/watch?v=LgGS0-Q5ODE&list=PLrUklKi1o_Zny9cgvjJ7xrBtcdOY_Kc6N&index=14&ab_channel=Citrix) is quick demo on using terraform cloud scripts to provision Citrix ADC in AWS.
 
 ## Folder structure
 
