@@ -116,3 +116,23 @@ is removed the bastion host is the only other way to access the NSIP.
 
 This means all SSH and NITRO API calls will have to be executed from
 the bastion host.
+
+# Cloud Native Deployments
+
+For Cloud Native Deployments where the use case is that a Citrix ADC VPX outside the Kubernetes cluster acts as Ingress, please set the variable `create_ILB_for_management` to `true`
+
+Sample Terraform Variable file below
+
+```
+resource_group_name="my-ha-inc-rg"
+location="southeastasia"
+virtual_network_address_space="192.168.0.0/16"
+management_subnet_address_prefix="192.168.0.0/24"
+client_subnet_address_prefix="192.168.1.0/24"
+server_subnet_address_prefix="192.168.2.0/24"
+adc_admin_password="<Provide a strong VPX Password>"
+controlling_subnet="<CIDR to allow Management Access>"
+create_ILB_for_management=true
+```
+
+For more information on Cloud Native Deployments, please see [Citrix Ingress Controller GitHub](https://github.com/citrix/citrix-k8s-ingress-controller)
