@@ -37,6 +37,11 @@ variable "ssh_public_key_file" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
+variable "ssh_private_key_file" {
+  description = "Private key file for accessing the ubuntu bastion machine."
+  default     = "~/.ssh/id_rsa"
+}
+
 variable "ubuntu_vm_size" {
   description = "Size for the ubuntu machine."
   default     = "Standard_A1_v2"
@@ -54,4 +59,9 @@ variable "controlling_subnet" {
 variable "adc_vm_size" {
   description = "Size for the ADC machine. Must allow for 3 NICs."
   default     = "Standard_F8s_v2"
+}
+
+variable "create_ILB_for_management" {
+  description = "Set this variable to true if an ILB is required for VPX NSIPs"
+  default = false
 }
