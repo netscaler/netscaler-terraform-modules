@@ -57,6 +57,11 @@ $ curl http://$(terraform output -raw frontend_ip) -H "Host: $(terraform output 
 <html><body><h1>It works!</h1></body></html>
 ```
 
+## Using `kubectl`
+
+```
+aws eks --region $(terraform output -raw aws_region) update-kubeconfig --name $(terraform output -raw cluster_name)
+```
 
 ## Configuration scripts
 
