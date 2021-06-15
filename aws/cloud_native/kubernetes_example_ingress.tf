@@ -31,9 +31,9 @@ resource "kubernetes_ingress" "apache_ingress" {
   metadata {
     name = "apache-ingress"
     annotations = {
-      "ingress.citrix.com/frontend-ip" = element(aws_network_interface.client.*.private_ip,0)
+      "ingress.citrix.com/frontend-ip"         = element(aws_network_interface.client.*.private_ip, 0)
       "ingress.citrix.com/frontend-ipset-name" = var.ipset_name
-      "kubernetes.io/ingress.class" = element(var.ingress_classes,0)
+      "kubernetes.io/ingress.class"            = element(var.ingress_classes, 0)
     }
   }
 

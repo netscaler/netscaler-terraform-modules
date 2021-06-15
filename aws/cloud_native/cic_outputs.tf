@@ -33,6 +33,6 @@ output "frontend_ip" {
 }
 
 output "example_application_hostname" {
- value = var.example_application_hostname
- description = "The Hostname of the Sample application deployed in this Terraform"
+  value       = var.example_application_hostname
+  description = "The Hostname of the Sample application deployed in this Terraform"
 }

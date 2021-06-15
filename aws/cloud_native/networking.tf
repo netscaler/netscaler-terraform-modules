@@ -32,7 +32,7 @@ resource "aws_vpc" "terraform" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = format("%s VPC", var.naming_prefix)
+    Name                                        = format("%s VPC", var.naming_prefix)
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
   }
 }
@@ -57,9 +57,9 @@ resource "aws_subnet" "client" {
   availability_zone       = var.aws_availability_zones[count.index]
 
   tags = {
-    Name = format("%s Public Subnet Node %v", var.naming_prefix, count.index)
+    Name                                        = format("%s Public Subnet Node %v", var.naming_prefix, count.index)
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/elb"                      = "1"
+    "kubernetes.io/role/elb"                    = "1"
   }
 
   count = 2
@@ -71,9 +71,9 @@ resource "aws_subnet" "server" {
   availability_zone = var.aws_availability_zones[count.index]
 
   tags = {
-    Name = format("%s Server Subnet Node %v", var.naming_prefix, count.index)
+    Name                                        = format("%s Server Subnet Node %v", var.naming_prefix, count.index)
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb"             = "1"
+    "kubernetes.io/role/internal-elb"           = "1"
   }
 
   count = 2
@@ -129,16 +129,16 @@ resource "aws_nat_gateway" "nat_gw" {
 
 resource "aws_route_table" "nat_gw_route" {
 
-  count = 2
+  count  = 2
   vpc_id = aws_vpc.terraform.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = element(aws_nat_gateway.nat_gw.*.id, count.index)
   }
 
   route {
-    cidr_block = "${var.cic_config_snip}/32"
+    cidr_block           = "${var.cic_config_snip}/32"
     network_interface_id = element(aws_network_interface.server.*.id, 0)
   }
 
@@ -150,7 +150,7 @@ resource "aws_route_table" "nat_gw_route" {
 
 resource "aws_route_table_association" "server_routes" {
 
-  count = 2
+  count          = 2
   subnet_id      = element(aws_subnet.server.*.id, count.index)
   route_table_id = element(aws_route_table.nat_gw_route.*.id, count.index)
 

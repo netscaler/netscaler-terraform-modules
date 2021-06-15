@@ -58,7 +58,7 @@ output "server_subnets_cidr_block" {
 }
 
 output "vpc_id" {
-  value    = aws_vpc.terraform.id
+  value       = aws_vpc.terraform.id
   description = "ID of the VPC that was newly created"
 }
 

@@ -28,7 +28,7 @@
 ########################################################################################
 
 resource "helm_release" "citrix_ingress_controller" {
-  name       = "citrix-ingress-controller"
+  name = "citrix-ingress-controller"
 
   repository = "https://citrix.github.io/citrix-helm-charts/"
   chart      = "citrix-ingress-controller"
@@ -54,7 +54,7 @@ resource "helm_release" "citrix_ingress_controller" {
   }
 
   set {
-    name  = "ingressClass"
+    name = "ingressClass"
     #value = var.ingress_classes
     value = "{${join(",", var.ingress_classes)}}"
   }

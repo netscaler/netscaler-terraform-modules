@@ -34,16 +34,16 @@ variable "cic_config_snip" {
 
 variable "adc_login_secret_name" {
   description = "Kubernetes Secret that holds the Citrix ADC login credentials"
-  default = "nslogin" 
+  default     = "nslogin"
 }
 
 variable "ingress_classes" {
-  type = list
-  default = ["citrix"]
+  type        = list(any)
+  default     = ["citrix"]
   description = "Kubernetes Ingress Classes that the Citrix Ingress Controller will act upon. Provide in a List format."
 }
 
 variable "example_application_hostname" {
   description = "Hostname of the sample application that is deployed and exposed via Ingress"
-  default = "cn.citrix-example-terraform-deployment.com"
+  default     = "cn.citrix-example-terraform-deployment.com"
 }

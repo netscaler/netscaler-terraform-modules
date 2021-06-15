@@ -35,7 +35,7 @@ module "eks" {
 
   tags = {
     Environment = "Dev"
-    Deployment = "Citrix-CN-example"
+    Deployment  = "Citrix-CN-example"
     Vendor      = "Citrix"
   }
 
