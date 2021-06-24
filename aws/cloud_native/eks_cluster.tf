@@ -32,6 +32,8 @@ module "eks" {
   cluster_name    = var.cluster_name
   cluster_version = "1.20"
   subnets         = aws_subnet.server.*.id
+  # Variable to control EKS creation
+  create_eks = var.create_eks
 
   tags = {
     Environment = "Dev"
@@ -54,12 +56,47 @@ module "eks" {
     },
   ]
 
+  depends_on = [
+    aws_route_table.nat_gw_route
+    ]
 }
 
 data "aws_eks_cluster" "cluster" {
+  count = var.create_eks ? 1 : 0
   name = module.eks.cluster_id
 }
 
 data "aws_eks_cluster_auth" "cluster" {
+  count = var.create_eks ? 1 : 0
   name = module.eks.cluster_id
+}
+
+module "cic_deployment" {
+  source = "./cic_deployment"
+  
+  adc_login_secret_name = var.adc_login_secret_name
+  new_password = var.new_password
+  cic_config_snip = var.cic_config_snip
+  ingress_classes = var.ingress_classes
+
+  count = var.create_cic ? 1 : 0
+
+  depends_on = [
+    module.eks
+  ]
+}
+
+module "sample_app_deployment" {
+  source = "./sample_app_deployment"
+  
+  frontend_ip = element(aws_network_interface.client.*.private_ip, 0)
+  ingress_classes = var.ingress_classes
+  ipset_name = var.ipset_name
+  example_application_hostname = var.example_application_hostname
+
+  count = var.create_sample_app ? 1 : 0
+
+  depends_on = [
+    module.eks
+  ]
 }

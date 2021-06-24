@@ -27,60 +27,52 @@
 #
 ########################################################################################
 
-resource "kubernetes_deployment" "apache" {
+resource "kubernetes_secret" "nslogin" {
   metadata {
-    name = "apache"
-    labels = {
-      app = "apache"
-    }
+    name = var.adc_login_secret_name
   }
 
-  spec {
-    replicas = 4
-
-    selector {
-      match_labels = {
-        app = "apache"
-      }
-    }
-
-    template {
-      metadata {
-        labels = {
-          app = "apache"
-        }
-      }
-
-      spec {
-        container {
-          image = "httpd:latest"
-          name  = "apache"
-
-          resources {
-            limits = {
-              cpu    = "100m"
-              memory = "128Mi"
-            }
-          }
-        }
-      }
-    }
+  data = {
+    username = "nsroot"
+    password = var.new_password
   }
+
+  type = "Opaque"
 }
 
-resource "kubernetes_service" "apache_service" {
-  metadata {
-    name = "apache-service"
-  }
-  spec {
-    selector = {
-      app = kubernetes_deployment.apache.metadata.0.labels.app
-    }
-    port {
-      port        = 80
-      target_port = 80
-    }
+resource "helm_release" "citrix_ingress_controller" {
+  name = "citrix-ingress-controller"
 
-    type = "ClusterIP"
+  repository = "https://citrix.github.io/citrix-helm-charts/"
+  chart      = "citrix-ingress-controller"
+
+  set {
+    name  = "license.accept"
+    value = "yes"
   }
+
+  set {
+    name  = "nsIP"
+    value = var.cic_config_snip
+  }
+
+  set {
+    name  = "adcCredentialSecret"
+    value = var.adc_login_secret_name
+  }
+
+  set {
+    name  = "crds.install"
+    value = "true"
+  }
+
+  set {
+    name = "ingressClass"
+    #value = var.ingress_classes
+    value = "{${join(",", var.ingress_classes)}}"
+  }
+
+  depends_on = [
+    kubernetes_secret.nslogin
+  ]
 }

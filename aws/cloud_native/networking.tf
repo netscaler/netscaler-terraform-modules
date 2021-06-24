@@ -125,6 +125,9 @@ resource "aws_nat_gateway" "nat_gw" {
   tags = {
     Name = "NAT Gateway for Server Subnet - EKS Requirement"
   }
+
+  depends_on = [aws_eip.nat_gw_eip]
+
 }
 
 resource "aws_route_table" "nat_gw_route" {
@@ -146,6 +149,8 @@ resource "aws_route_table" "nat_gw_route" {
     Name = format("%s Route Table NAT Gateway", var.naming_prefix)
   }
 
+  depends_on = [aws_nat_gateway.nat_gw]
+
 }
 
 resource "aws_route_table_association" "server_routes" {
@@ -153,6 +158,8 @@ resource "aws_route_table_association" "server_routes" {
   count          = 2
   subnet_id      = element(aws_subnet.server.*.id, count.index)
   route_table_id = element(aws_route_table.nat_gw_route.*.id, count.index)
+
+  depends_on = [aws_nat_gateway.nat_gw]
 
 }
 

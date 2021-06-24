@@ -136,8 +136,12 @@ terraform apply -auto-approve
 The terraform would take a few minutus to complete. Once the terraform execution completes, you can see things in action by using a simple `curl` command.
 
 ```
-$ curl http://$(terraform output -raw frontend_ip) -H "Host: $(terraform output -raw example_application_hostname)"
+curl http://$(terraform output -raw frontend_ip) -H "Host: $(terraform output -raw example_application_hostname)"
+```
 
+Response:
+
+```
 <html><body><h1>It works!</h1></body></html>
 ```
 
@@ -158,5 +162,17 @@ aws eks --region $(terraform output -raw aws_region) update-kubeconfig --name $(
 ```
 
 After this, you can use the regular `kubectl` commands to see the workloads and other configuration in the EKS cluster.
+
+## Delete the entire deployment
+
+The entire deployment can be deleted if needed. Please do this if you absolutely want to delete the complete deployment that includes Citrix ADC VPX HA pair, EKS cluster including it's workloads and other Networking elements like Subnets, VPC, etc.
+
+```
+terraform refresh
+terraform destroy -auto-approve
+```
+
+**Note:** `terraform refresh` is needed to make sure terraform updates it's state information correctly so that the destroy happens in a correct order handling the dependencies for each entity.
+
 
 More information on the Terraform scripts can be found [here](https://github.com/citrix/terraform-cloud-scripts/blob/master/aws/ha_across_az/README.md)

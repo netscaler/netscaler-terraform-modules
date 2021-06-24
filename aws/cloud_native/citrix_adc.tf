@@ -41,6 +41,21 @@ resource "aws_instance" "citrix_adc" {
 
   iam_instance_profile = aws_iam_instance_profile.citrix_adc_ha_instance_profile.name
 
+#  user_data = <<EOF
+#    <NS-PRE-BOOT-CONFIG>
+#      <NS-CONFIG>
+#        add ns ip ${element(aws_network_interface.server.*.private_ip, 0)} ${var.server_subnet_mask} -type SNIP
+#        add ns ip ${element(aws_network_interface.client.*.private_ip, 0)} ${var.server_subnet_mask} -type VIP
+#        add ns ip ${element(aws_network_interface.client.*.private_ip, 1)} ${var.server_subnet_mask} -type VIP
+#        add route ${cidrhost(element(aws_subnet.server.*.cidr_block, 1), 0)} ${var.server_subnet_mask} ${cidrhost(element(aws_subnet.server.*.cidr_block, 0), 1)}
+#        add ipset ${var.ipset_name}
+#        bind ipset ${var.ipset_name} ${element(aws_network_interface.client.*.private_ip, 1)}
+#        add ha node 1 ${element(aws_network_interface.management.*.private_ip, 1)} -inc ENABLED
+#        add ns ip ${var.cic_config_snip} 255.255.255.0 -type SNIP -mgmtAccess ENABLED
+#      </NS-CONFIG>
+#    </NS-PRE-BOOT-CONFIG>
+#	EOF
+
   tags = {
     Name = format("Citrix ADC HA Node %v", count.index)
   }
