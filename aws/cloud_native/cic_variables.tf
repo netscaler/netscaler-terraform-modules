@@ -47,3 +47,18 @@ variable "example_application_hostname" {
   description = "Hostname of the sample application that is deployed and exposed via Ingress"
   default     = "cn.citrix-example-terraform-deployment.com"
 }
+
+variable "create_cic" {
+  description = "Set this variable to false if you don't want to create a CIC deployment"
+  default = true
+}
+
+variable "create_sample_app" {
+  description = "Set this variable to false if you don't want to create a Sample example microservice"
+  default = true
+}
+
+variable "create_eks" {
+  description = "Set this variable to false if you don't want to create a the EKS cluster"
+  default = true
+}

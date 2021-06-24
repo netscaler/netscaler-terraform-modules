@@ -27,35 +27,87 @@
 #
 ########################################################################################
 
-resource "helm_release" "citrix_ingress_controller" {
-  name = "citrix-ingress-controller"
-
-  repository = "https://citrix.github.io/citrix-helm-charts/"
-  chart      = "citrix-ingress-controller"
-
-  set {
-    name  = "license.accept"
-    value = "yes"
+resource "kubernetes_deployment" "apache" {
+  metadata {
+    name = "apache"
+    labels = {
+      app = "apache"
+    }
   }
 
-  set {
-    name  = "nsIP"
-    value = var.cic_config_snip
+  spec {
+    replicas = 4
+
+    selector {
+      match_labels = {
+        app = "apache"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "apache"
+        }
+      }
+
+      spec {
+        container {
+          image = "httpd:latest"
+          name  = "apache"
+
+          resources {
+            limits = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "apache_service" {
+  metadata {
+    name = "apache-service"
+  }
+  spec {
+    selector = {
+      app = kubernetes_deployment.apache.metadata.0.labels.app
+    }
+    port {
+      port        = 80
+      target_port = 80
+    }
+
+    type = "ClusterIP"
+  }
+}
+
+resource "kubernetes_ingress" "apache_ingress" {
+  metadata {
+    name = "apache-ingress"
+    annotations = {
+      "ingress.citrix.com/frontend-ip"         = var.frontend_ip
+      //"ingress.citrix.com/frontend-ip"         = element(aws_network_interface.client.*.private_ip, 0)
+      "ingress.citrix.com/frontend-ipset-name" = var.ipset_name
+      "kubernetes.io/ingress.class"            = element(var.ingress_classes, 0)
+    }
   }
 
-  set {
-    name  = "adcCredentialSecret"
-    value = var.adc_login_secret_name
-  }
-
-  set {
-    name  = "crds.install"
-    value = "true"
-  }
-
-  set {
-    name = "ingressClass"
-    #value = var.ingress_classes
-    value = "{${join(",", var.ingress_classes)}}"
+  spec {
+    rule {
+      host = var.example_application_hostname
+      http {
+        path {
+          backend {
+            service_name = kubernetes_service.apache_service.metadata.0.name
+            service_port = kubernetes_service.apache_service.spec.0.port.0.target_port
+          }
+          path = "/"
+        }
+      }
+    }
   }
 }
