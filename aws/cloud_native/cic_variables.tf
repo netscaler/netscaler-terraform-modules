@@ -50,15 +50,15 @@ variable "example_application_hostname" {
 
 variable "create_cic" {
   description = "Set this variable to false if you don't want to create a CIC deployment"
-  default = true
+  default     = true
 }
 
 variable "create_sample_app" {
   description = "Set this variable to false if you don't want to create a Sample example microservice"
-  default = true
+  default     = true
 }
 
 variable "create_eks" {
   description = "Set this variable to false if you don't want to create a the EKS cluster"
-  default = true
+  default     = true
 }

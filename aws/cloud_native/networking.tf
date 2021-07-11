@@ -27,9 +27,12 @@
 #
 ########################################################################################
 
+data "aws_availability_zones" "available" {}
+
 resource "aws_vpc" "terraform" {
-  cidr_block           = var.vpc_cidr_block
-  enable_dns_hostnames = true
+  cidr_block                       = var.vpc_cidr_block
+  enable_dns_hostnames             = true
+  assign_generated_ipv6_cidr_block = true
 
   tags = {
     Name                                        = format("%s VPC", var.naming_prefix)
@@ -41,7 +44,7 @@ resource "aws_subnet" "management" {
   vpc_id                  = aws_vpc.terraform.id
   cidr_block              = var.management_subnet_cidr_blocks[count.index]
   map_public_ip_on_launch = true
-  availability_zone       = var.aws_availability_zones[count.index]
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
 
   tags = {
     Name = format("%s Management Subnet Node %v", var.naming_prefix, count.index)
@@ -54,7 +57,7 @@ resource "aws_subnet" "client" {
   vpc_id                  = aws_vpc.terraform.id
   cidr_block              = var.client_subnet_cidr_blocks[count.index]
   map_public_ip_on_launch = true
-  availability_zone       = var.aws_availability_zones[count.index]
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
 
   tags = {
     Name                                        = format("%s Public Subnet Node %v", var.naming_prefix, count.index)
@@ -68,7 +71,7 @@ resource "aws_subnet" "client" {
 resource "aws_subnet" "server" {
   vpc_id            = aws_vpc.terraform.id
   cidr_block        = var.server_subnet_cidr_blocks[count.index]
-  availability_zone = var.aws_availability_zones[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
     Name                                        = format("%s Server Subnet Node %v", var.naming_prefix, count.index)
