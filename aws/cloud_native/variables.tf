@@ -32,11 +32,6 @@ variable "aws_region" {
   default     = "ap-south-1"
 }
 
-variable "aws_availability_zones" {
-  description = "List of two availability zones."
-  type        = list(string)
-}
-
 variable "aws_access_key" {
   description = "The AWS access key"
 }
