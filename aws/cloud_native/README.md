@@ -157,8 +157,10 @@ For more information on Citrix Ingress Controller, read [Citrix Ingress Controll
 
 To have a look at the payloads that the terraform deployed on EKS, use the following command to download the `kubeconfig` of the newly created EKS cluster. This `kubeconfig` file would be saved to the default `kubeconfig` location.
 
+To know the default name of the EKS cluster, have a look at the variable `cluster_name` in the `eks_variables.tf` file.
+
 ```
-aws eks --region $(terraform output -raw aws_region) update-kubeconfig --name $(terraform output -raw cluster_name)
+aws eks --region <AWS-Region> update-kubeconfig --name <Name-of-the-EKS-Cluster>
 ```
 
 After this, you can use the regular `kubectl` commands to see the workloads and other configuration in the EKS cluster.
