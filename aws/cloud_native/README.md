@@ -58,7 +58,7 @@ The configuration combines the process documented for [Deploying VPX HA with Pri
 
 ```
 git clone https://github.com/citrix/terraform-cloud-scripts.git
-cd terraform-cloud-scripts/terraform-cloud-scripts/aws/cloud_native
+cd terraform-cloud-scripts/aws/cloud_native
 ```
 
 ### Initialise the terraform deployment
