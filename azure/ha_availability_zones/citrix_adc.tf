@@ -6,7 +6,7 @@ resource "azurerm_public_ip" "terraform-adc-management-public-ip" {
 
   sku = "Standard"
 
-  zones = formatlist("%v", [count.index + 1])
+  availability_zone = format("%v", count.index + 1)
 
   count = 2
 }
