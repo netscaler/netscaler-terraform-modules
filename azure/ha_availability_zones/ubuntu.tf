@@ -16,6 +16,7 @@ resource "azurerm_network_interface" "terraform-ubuntu-management-interface" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.terraform-ubuntu-public-ip.id
   }
+  depends_on = [azurerm_subnet_network_security_group_association.management-subnet-association]
 }
 
 resource "azurerm_linux_virtual_machine" "terraform-ubuntu-machine" {
