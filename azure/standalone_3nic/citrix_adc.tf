@@ -17,6 +17,8 @@ resource "azurerm_network_interface" "terraform-adc-management-interface" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.terraform-adc-management-public-ip.id
   }
+
+  depends_on = [azurerm_subnet_network_security_group_association.management-subnet-association]
 }
 
 resource "azurerm_public_ip" "terraform-adc-client-public-ip" {
@@ -37,6 +39,8 @@ resource "azurerm_network_interface" "terraform-adc-client-interface" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.terraform-adc-client-public-ip.id
   }
+
+  depends_on = [azurerm_subnet_network_security_group_association.client-subnet-association]
 }
 
 resource "azurerm_network_interface" "terraform-adc-server-interface" {
@@ -49,6 +53,8 @@ resource "azurerm_network_interface" "terraform-adc-server-interface" {
     subnet_id                     = azurerm_subnet.terraform-server-subnet.id
     private_ip_address_allocation = "Dynamic"
   }
+
+  depends_on = [azurerm_subnet_network_security_group_association.server-subnet-association]
 }
 
 
@@ -107,4 +113,10 @@ resource "azurerm_virtual_machine" "terraform-adc-machine" {
     publisher = "citrix"
     product   = "netscalervpx-130"
   }
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.server-subnet-association,
+    azurerm_subnet_network_security_group_association.client-subnet-association,
+    azurerm_subnet_network_security_group_association.management-subnet-association,
+  ]
 }
