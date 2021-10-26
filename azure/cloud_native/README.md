@@ -160,8 +160,7 @@ The following configurations is added by Bash script:
 1. OpenShift worker and master subnet association with the route table created for HA and pod network of OpenShift.
 2. Enables `IP Fordwording` in all the worker node VM's NIC to allow traffic from HA to the pod network of the Openshift Cluster.
 
-
-##### Explanation of the Additional Input Variables
+### Explanation of the Additional Input Variables
 
 | Variable                               | Description                          |
 | -------------------------------------- | ------------------------------------ |
@@ -190,8 +189,8 @@ cd terraform-cloud-scripts/azure/cloud_native
 
 Create the input variable file according to the cluster for which the VPX in HA-INC modeis being deployed.
 
-#### Sample Input Variables for Kubernetes cluster:
 The following is a sample Terraform Variable file:
+#### For Kubernetes cluster:
 
 ```
 resource_group_name="my-ha-inc-rg"
@@ -206,7 +205,7 @@ ssh_public_key_file = "<Public key path>"
 ssh_private_key_file = "<Private key path>"
 ```
 
-#### Sample Input Variables for OpenShift Cluster
+#### For OpenShift Cluster
 
 ```
 resource_group_name="priyanka-ha-inc-test"
@@ -221,6 +220,8 @@ create_ILB_for_management=true
 create_ha_for_openshift=true
 openshift_cluster_name = "cnn-oc-cluster-1234"
 openshift_cluster_host_network_details={"10.128.2.0/23": "10.0.32.4", "10.129.2.0/23": "10.0.32.5", "10.131.0.0/23": "10.0.32.6"}
+ssh_public_key_file = "<Public key path>"
+ssh_private_key_file = "<Private key path>"
 ```
 
 **Important:** Make sure you input values in the file in accordance with your deployment topology.
