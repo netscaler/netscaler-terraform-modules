@@ -129,25 +129,12 @@ This means that all SSH and NITRO API calls will have to be executed from the ba
 | `server_subnet_address_prefix`     | Specify the CIDRs for the Server Subnet.                                     |
 | `adc_admin_password`               | Specify password to be configured on Citrix ADC VPX.                                 |
 | `controlling_subnet`               | Specify the CIDR which has access to the deployed Citrix ADC instances. |
+| `ssh_public_key_file`              | Specify Public key file for accessing the ubuntu bastion machine. |
+| `ssh_private_key_file`             | Specify Private key file for accessing the ubuntu bastion machine. |
 
 ## For Kubernetes Cluster
 
-For Cloud Native deployments, in which Citrix ADC VPX is outside the Kubernetes cluster acts as Ingress, please set the variable; `create_ILB_for_management` as `true`.
-
-The following is a sample Terraform Variable file:
-
-```
-resource_group_name="my-ha-inc-rg"
-location="southeastasia"
-virtual_network_address_space="192.168.0.0/16"
-management_subnet_address_prefix="192.168.0.0/24"
-client_subnet_address_prefix="192.168.1.0/24"
-server_subnet_address_prefix="192.168.2.0/24"
-adc_admin_password="<Provide a strong VPX Password>"
-controlling_subnet="<CIDR to allow Management Access>"
-```
-
-For more information on Cloud Native deployments, please see [Citrix Ingress Controller GitHub](https://github.com/citrix/citrix-k8s-ingress-controller).
+For Cloud Native deployments, in which Citrix ADC VPX is outside the Kubernetes cluster acts as Ingress, this terraform can be used to deploy VPX in HA-INC mode.
 
 ## For Openshift Cluster
 
@@ -173,26 +160,53 @@ The following configurations is added by Bash script:
 1. OpenShift worker and master subnet association with the route table created for HA and pod network of OpenShift.
 2. Enables `IP Fordwording` in all the worker node VM's NIC to allow traffic from HA to the pod network of the Openshift Cluster.
 
-### Steps to Deploy:
 
-#### Prerequisites
+##### Explanation of the Additional Input Variables
+
+| Variable                               | Description                          |
+| -------------------------------------- | ------------------------------------ |
+| create_ha_for_openshift                | Set this to `true` for creating HA for OpenShift cluster. |
+| openshift_cluster_name                 | Provide the name of the Openshift cluster deployed in Azure including the unique indentifier attached to it. For example, if cluster is deployed in "cnn-oc-priyanka-temp-6jjxp-rg" resource group then cluster name will be "cnn-oc-priyanka-temp-6jjxp". |
+| openshift_cluster_host_network_details | Provide details of Openshift pod network and node IP addresses. This should be list of dictionaries and the key for each dictionary is pod network prefix and value should be OpenShift cluster node IP address. |
+
+**Important:** After creating a variable file in accordance with your requirements, ensure to name the file with the suffix `.auto.tfvars`. For example, `my-vpx-ha-deployment.auto.tfvars`.
+
+## Steps to Deploy:
+
+### Prerequisites
 1. Ensure that you have Terraform.
 2. Ensure that you have Azure CLI installed and configured using the command: `az login`.
 3. Ensure that you have Kubernetes configuration utility `kubectl` installed.
 4. Ensure that you have OpenShift cluster up and running in Azure platform.
 
-#### Clone the GitHub Repo
+### Clone the GitHub Repo
 
 ```
 git clone https://github.com/citrix/terraform-cloud-scripts.git
 cd terraform-cloud-scripts/azure/cloud_native
 ```
 
-#### Initialise the terraform deployment
+### Initialise the terraform deployment
 
-The following is a sample input variable file that contains the input variables to run the entire deployment.
+Create the input variable file according to the cluster for which the VPX in HA-INC modeis being deployed.
 
-##### Sample Input Variables
+#### Sample Input Variables for Kubernetes cluster:
+The following is a sample Terraform Variable file:
+
+```
+resource_group_name="my-ha-inc-rg"
+location="southeastasia"
+virtual_network_address_space="192.168.0.0/16"
+management_subnet_address_prefix="192.168.0.0/24"
+client_subnet_address_prefix="192.168.1.0/24"
+server_subnet_address_prefix="192.168.2.0/24"
+adc_admin_password="<Provide a strong VPX Password>"
+controlling_subnet="<CIDR to allow Management Access>"
+ssh_public_key_file = "<Public key path>"
+ssh_private_key_file = "<Private key path>"
+```
+
+#### Sample Input Variables for OpenShift Cluster
 
 ```
 resource_group_name="priyanka-ha-inc-test"
@@ -208,18 +222,8 @@ create_ha_for_openshift=true
 openshift_cluster_name = "cnn-oc-cluster-1234"
 openshift_cluster_host_network_details={"10.128.2.0/23": "10.0.32.4", "10.129.2.0/23": "10.0.32.5", "10.131.0.0/23": "10.0.32.6"}
 ```
+
 **Important:** Make sure you input values in the file in accordance with your deployment topology.
-
-##### Explanation of the Additional Input Variables
-
-| Variable                               | Description                          |
-| -------------------------------------- | ------------------------------------ |
-| create_ILB_for_management              | Enable this to configure ILB whose IP will be used by CIC for configuring Citrix ADC VPX HA. |
-| create_ha_for_openshift                | Set this to `true` for creating HA for OpenShift cluster. |
-| openshift_cluster_name                 | Provide the name of the Openshift cluster deployed in Azure. |
-| openshift_cluster_host_network_details | Provide details of Openshift pod network and node IP addresses. This should be list of dictionaries and the key for each dictionary is pod network prefix and value should be OpenShift cluster node IP address. |
-
-**Important:** After creating a variable file in accordance with your requirements, ensure to name the file with the suffix `.auto.tfvars`. For example, `my-vpx-ha-deployment.auto.tfvars`.
 
 After you create an input variable file, you can initialize the terraform using the following command.
 
@@ -234,8 +238,8 @@ terraform plan
 terraform apply -auto-approve
 ```
 
-#### Run the bash scipt:
-Run the bash scipt for additinal configuration inside the same folder:
+#### Run the bash scipt for additional configuration for OpenShift Cluster:
+If VPX in HA-INC mode is being deployed for OpenShift cluster then run the bash scipt for additinal configuration inside the same folder:
 
 ```
 chmod +x openshift.sh
@@ -245,6 +249,15 @@ chmod +x openshift.sh
 ## Delete the deployment
 
 The entire deployment can be deleted if needed. Please do this if you absolutely want to delete the complete deployment that includes Citrix ADC VPX HA pair including it's workloads and other Networking elements like Subnets, VPC, VNET Peering etc.
+
+### For Kubernetes Cluster:
+
+```
+terraform refresh
+terraform destroy -auto-approve
+```
+
+### For OpenShift Cluster:
 
 ```
 ./openshift.sh -o delete

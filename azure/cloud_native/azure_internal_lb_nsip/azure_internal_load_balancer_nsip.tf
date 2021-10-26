@@ -44,7 +44,6 @@ resource "azurerm_lb_rule" "allow_https_nsip" {
 
 resource "azurerm_lb_backend_address_pool" "tf_internal_backend_pool" {
 
-  resource_group_name = var.resource_group_name
   loadbalancer_id     = azurerm_lb.tf_internal_lb.id
   name                = "BackEndAddressPool"
 }
