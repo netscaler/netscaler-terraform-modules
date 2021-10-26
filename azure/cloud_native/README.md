@@ -165,7 +165,7 @@ The following configurations is added by Bash script:
 | Variable                               | Description                          |
 | -------------------------------------- | ------------------------------------ |
 | create_ha_for_openshift                | Set this to `true` for creating HA for OpenShift cluster. |
-| openshift_cluster_name                 | Provide the name of the Openshift cluster deployed in Azure including the unique indentifier attached to it. For example, if cluster is deployed in "cnn-oc-priyanka-temp-6jjxp-rg" resource group then cluster name will be "cnn-oc-priyanka-temp-6jjxp". |
+| openshift_cluster_name                 | Provide the name of the OpenShift cluster deployed in Azure including the unique identifier attached to it. For example, if cluster is deployed in "cnn-oc-6jjxp-rg" resource group then cluster name "cnn-oc-6jjxp" should be provided in the variable. |
 | openshift_cluster_host_network_details | Provide details of Openshift pod network and node IP addresses. This should be list of dictionaries and the key for each dictionary is pod network prefix and value should be OpenShift cluster node IP address. |
 
 ## Steps to Deploy:
