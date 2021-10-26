@@ -168,8 +168,6 @@ The following configurations is added by Bash script:
 | openshift_cluster_name                 | Provide the name of the Openshift cluster deployed in Azure including the unique indentifier attached to it. For example, if cluster is deployed in "cnn-oc-priyanka-temp-6jjxp-rg" resource group then cluster name will be "cnn-oc-priyanka-temp-6jjxp". |
 | openshift_cluster_host_network_details | Provide details of Openshift pod network and node IP addresses. This should be list of dictionaries and the key for each dictionary is pod network prefix and value should be OpenShift cluster node IP address. |
 
-**Important:** After creating a variable file in accordance with your requirements, ensure to name the file with the suffix `.auto.tfvars`. For example, `my-vpx-ha-deployment.auto.tfvars`.
-
 ## Steps to Deploy:
 
 ### Prerequisites
@@ -223,6 +221,8 @@ openshift_cluster_host_network_details={"10.128.2.0/23": "10.0.32.4", "10.129.2.
 ssh_public_key_file = "<Public key path>"
 ssh_private_key_file = "<Private key path>"
 ```
+
+**Important:** After creating a variable file in accordance with your requirements, ensure to name the file with the suffix `.auto.tfvars`. For example, `my-vpx-ha-deployment.auto.tfvars`.
 
 **Important:** Make sure you input values in the file in accordance with your deployment topology.
 
