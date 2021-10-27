@@ -25,7 +25,3 @@ output "bastion_public_ip" {
 output "alb_public_ip" {
   value = azurerm_public_ip.terraform-load-balancer-public-ip.ip_address
 }
-
-output "cic_nsip" {
-  value = module.azure_ilb_nsip
-}
