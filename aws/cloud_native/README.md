@@ -83,7 +83,7 @@ client_subnet_cidr_blocks=["192.168.3.0/24", "192.168.4.0/24"]
 server_subnet_cidr_blocks=["192.168.5.0/24", "192.168.6.0/24"]
 controlling_subnet="17.5.7.8/32"
 naming_prefix="cn-terraform"
-vpx_ami_map={"ap-south-1"="ami-05db944a73aa7c765"}
+vpx_ami_map={"ap-south-1"="ami-09f3fca0ae966dd5f"}
 ns_instance_type="m4.xlarge"
 aws_ssh_key_name="cn-terraform"
 aws_ssh_public_key="ssh-rsa XXXXXXXX"
@@ -160,7 +160,7 @@ To have a look at the payloads that the terraform deployed on EKS, use the follo
 To know the default name of the EKS cluster, have a look at the variable `cluster_name` in the `eks_variables.tf` file.
 
 ```
-aws eks --region <AWS-Region> update-kubeconfig --name <Name-of-the-EKS-Cluster>
+aws eks --region $(terraform output --raw aws_region) update-kubeconfig --name $(terraform output --raw cluster_name)
 ```
 
 After this, you can use the regular `kubectl` commands to see the workloads and other configuration in the EKS cluster.
