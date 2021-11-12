@@ -123,11 +123,33 @@ resource "azurerm_virtual_machine" "terraform-adc-machine" {
   }
 
   depends_on = [
-    azurerm_subnet_network_security_group_association.server-subnet-association,
-    azurerm_subnet_network_security_group_association.client-subnet-association,
-    azurerm_subnet_network_security_group_association.management-subnet-association,
-    azurerm_network_interface_backend_address_pool_association.tf_assoc,
-  ]
+     azurerm_subnet_network_security_group_association.server-subnet-association,
+     azurerm_subnet_network_security_group_association.client-subnet-association,
+     azurerm_subnet_network_security_group_association.management-subnet-association,
+     azurerm_network_interface_backend_address_pool_association.tf_assoc,
+   ]
 
   count = 2
+}
+
+# Special Module to configure an Internal ALB for NSIP
+# This is required for Cloud Native Deployments
+module "azure_ilb_nsip" {
+  source = "./azure_internal_lb_nsip"
+
+  location                     = var.location
+  resource_group_name          = var.resource_group_name
+  management_subnet_id         = azurerm_subnet.terraform-management-subnet.id
+  citrixadc_management_nic     = azurerm_network_interface.terraform-adc-management-interface
+  citrixadc_nsips              = azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address
+  citrixadc_management_netmask = cidrnetmask(var.management_subnet_address_prefix)
+  adc_admin_username           = var.adc_admin_username
+  adc_admin_password           = var.adc_admin_password
+  bastion_public_ip            = azurerm_public_ip.terraform-ubuntu-public-ip.ip_address
+  ubuntu_admin_user            = var.ubuntu_admin_user
+  ssh_private_key_file         = var.ssh_private_key_file
+
+  depends_on = [
+    azurerm_virtual_machine.terraform-adc-machine
+  ]
 }

@@ -1,3 +1,11 @@
+locals {
+  openshift_cluster_host_network_list = keys(var.openshift_cluster_host_network_details)
+  snip_addresses = flatten([
+    for ip in azurerm_network_interface.terraform-adc-server-interface.*.private_ip_address :
+    ip
+  ])
+}
+
 variable "resource_group_name" {
   description = "Name for the resource group that will contain all created resources"
   default     = "terraform-resource-group"
@@ -37,6 +45,11 @@ variable "ssh_public_key_file" {
   default     = "~/.ssh/id_rsa.pub"
 }
 
+variable "ssh_private_key_file" {
+  description = "Private key file for accessing the ubuntu bastion machine."
+  default     = "~/.ssh/id_rsa"
+}
+
 variable "ubuntu_vm_size" {
   description = "Size for the ubuntu machine."
   default     = "Standard_A1_v2"
@@ -54,4 +67,20 @@ variable "controlling_subnet" {
 variable "adc_vm_size" {
   description = "Size for the ADC machine. Must allow for 3 NICs."
   default     = "Standard_F8s_v2"
+}
+
+variable "create_ha_for_openshift" {
+  description = "Set this variable to true if you are creating HA INC for OpenShift Cluster"
+  default     = false
+}
+
+variable "openshift_cluster_name" {
+  description = "Name of the OpenShift cluster"
+  default     = ""
+}
+
+variable "openshift_cluster_host_network_details" {
+  description = "Details of OpenShift Host Network. Key is pod network prefix and Value is node IP"
+  type        = map(string)
+  default     = {}
 }
