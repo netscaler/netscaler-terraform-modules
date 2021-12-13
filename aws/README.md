@@ -13,7 +13,9 @@ various configurations.
 
 * `standalone_3nic`: Scripts to deploy a single Citrix ADC instance on AWS with 3 NICs configured.
 * `ha_same_az`: Scripts to deploy a Citrix ADC high availability pair in a single AWS availability zone.
-* `ha_across_az`: Scripts to deploy a Citrix ADC high availability pair across two AWS availability zones.
+* `ha_across_az`:
+  * `for_external_apps`: Scripts to deploy a Citrix ADC high availability pair across two AWS availability zones for external apps.
+  * `for_internal_apps`: Scripts to deploy a Citrix ADC high availability pair across two AWS availability zones for internal apps.
 
 ### Sample service deployments
 

@@ -4,6 +4,8 @@
 # .tfstate files
 *.tfstate
 *.tfstate.*
+.terraform.lock.hcl
+*.log
 
 # .tfvars files
 *.tfvars
@@ -13,9 +15,7 @@
 
 #
 plan
-
-# TFVars
-*.tfvars
+*.plan
 
 # Temp directory
 temp
