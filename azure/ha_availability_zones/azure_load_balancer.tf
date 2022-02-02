@@ -3,6 +3,7 @@
 ##############
 
 resource "azurerm_public_ip" "terraform-load-balancer-public-ip" {
+  count               = var.ha_for_internal_lb ? 0 : 1
   name                = "tf_lb_pubip"
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   location            = var.location
@@ -26,7 +27,7 @@ resource "azurerm_lb_rule" "allow_http" {
   protocol                       = "Tcp"
   frontend_port                  = 80
   backend_port                   = 80
-  frontend_ip_configuration_name = "PublicIPAddress"
+  frontend_ip_configuration_name = var.ha_for_internal_lb ? "PrivateIPAddress" : "PublicIPAddress"
   enable_floating_ip             = true
   idle_timeout_in_minutes        = 4
   load_distribution              = "Default"
@@ -35,8 +36,8 @@ resource "azurerm_lb_rule" "allow_http" {
 }
 
 resource "azurerm_lb_backend_address_pool" "tf_backend_pool" {
-  loadbalancer_id     = azurerm_lb.tf_lb.id
-  name                = "BackEndAddressPool"
+  loadbalancer_id = azurerm_lb.tf_lb.id
+  name            = "BackEndAddressPool"
 }
 
 resource "azurerm_lb_probe" "tf_probe" {
@@ -55,8 +56,10 @@ resource "azurerm_lb" "tf_lb" {
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   sku                 = "Standard"
 
+
   frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.terraform-load-balancer-public-ip.id
+    name                 = var.ha_for_internal_lb ? "PrivateIPAddress" : "PublicIPAddress"
+    public_ip_address_id = var.ha_for_internal_lb ? null : azurerm_public_ip.terraform-load-balancer-public-ip.0.id
+    subnet_id            = var.ha_for_internal_lb ? azurerm_subnet.terraform-client-subnet.id : null
   }
 }

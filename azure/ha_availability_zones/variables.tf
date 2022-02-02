@@ -55,3 +55,8 @@ variable "adc_vm_size" {
   description = "Size for the ADC machine. Must allow for 3 NICs."
   default     = "Standard_F8s_v2"
 }
+
+variable "ha_for_internal_lb" {
+  description = "Whether to use HA for the internal load balancer."
+  default     = false
+}
