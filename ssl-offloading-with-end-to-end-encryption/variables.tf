@@ -1,22 +1,28 @@
 # SSL Service 1
-variable "ssl_service1_name" {
-  default = "service-ssl-1"
+variable "service1_name" {
+  default = "http_service1"
 }
 
-variable "ssl_service1_ip" {
+variable "service1_ip" {
+}
+
+variable "service1_port" {
 }
 
 # SSL Service 2
-variable "ssl_service2_name" {
-  default = "service-ssl-2"
+variable "service2_name" {
+  default = "http_service2"
 }
 
-variable "ssl_service2_ip" {
+variable "service2_ip" {
+}
+
+variable "service2_port" {
 }
 
 # Production SSL LB Vservice
 variable "production_lb_name" {
-  default = "vserver-ssl"
+  default = "ssl_vserver"
 }
 
 variable "production_lb_ip" {
