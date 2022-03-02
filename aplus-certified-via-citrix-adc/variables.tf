@@ -38,3 +38,10 @@ variable "ssl_certificate_path" {
 
 variable "ssl_key_path" {
 }
+
+variable "ssl_cacert_path" {
+}
+
+variable "ssl_cacert_name" {
+  default = "ssl-cacert"
+}

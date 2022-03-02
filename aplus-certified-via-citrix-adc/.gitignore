@@ -1,0 +1,8 @@
+provider.tf
+adns-iamrole.json
+setup.info
+data
+_misc
+input.auto.tfvars
+.terraform.lock.hcl
+.terraform*

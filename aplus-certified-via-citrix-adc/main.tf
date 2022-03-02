@@ -15,31 +15,33 @@ resource "citrixadc_service" "service2" {
 }
 
 resource "citrixadc_lbvserver" "production_lb" {
-  depends_on = [ citrixadc_sslparameter.default ]
+  depends_on  = [citrixadc_sslparameter.defaultprofile]
   name        = var.production_lb_name
   ipv46       = var.production_lb_ip
   port        = "443"
   servicetype = "SSL"
-  ciphers =  ["DEFAULT"] #TODO: Ask George, DEFAULT has to be by default
-  sslprofile = "ns_default_ssl_profile_secure_frontend"
+  ciphers     = ["DEFAULT"]
+  sslprofile  = "ns_default_ssl_profile_secure_frontend"
 }
 
 resource "citrixadc_systemfile" "sslcert_copy" {
-    filename = "sslcert.pem"
-    filelocation = "/var/tmp"
-    filecontent = file(var.ssl_certificate_path)
+  filename     = "sslcert.pem"
+  filelocation = "/var/tmp"
+  filecontent  = file(var.ssl_certificate_path)
 }
 
-resource "citrixadc_systemfile" "sskkey_copy" {
-    filename = "sslkey.ky"
-    filelocation = "/var/tmp"
-    filecontent = file(var.ssl_key_path)
+resource "citrixadc_systemfile" "sslkey_copy" {
+  filename     = "sslkey.ky"
+  filelocation = "/var/tmp"
+  filecontent  = file(var.ssl_key_path)
 }
 
 resource "citrixadc_sslcertkey" "sslcertkey1" {
-  certkey = var.ssl_certkey_name
-  cert    = format("%s/%s", citrixadc_systemfile.sslcert_copy.filelocation, citrixadc_systemfile.sslcert_copy.filename)
-  key     = format("%s/%s", citrixadc_systemfile.sskkey_copy.filelocation, citrixadc_systemfile.sskkey_copy.filename)
+  depends_on      = [citrixadc_sslcertkey.sslcacert]
+  certkey         = var.ssl_certkey_name
+  cert            = format("%s/%s", citrixadc_systemfile.sslcert_copy.filelocation, citrixadc_systemfile.sslcert_copy.filename)
+  key             = format("%s/%s", citrixadc_systemfile.sslkey_copy.filelocation, citrixadc_systemfile.sslkey_copy.filename)
+  linkcertkeyname = var.ssl_cacert_name
 }
 
 resource "citrixadc_sslvserver_sslcertkey_binding" "sslvserver_sslcertkey_bind" {
@@ -57,7 +59,18 @@ resource "citrixadc_lbvserver_service_binding" "lbvserver_sslservice2_bind" {
   servicename = citrixadc_service.service2.name
 }
 
-resource "citrixadc_sslparameter" "default" {
+resource "citrixadc_sslparameter" "defaultprofile" {
   defaultprofile = "ENABLED"
+}
+
+resource "citrixadc_systemfile" "ssl_cacert_copy" {
+  filename     = "cacert.crt"
+  filelocation = "/var/tmp"
+  filecontent  = file(var.ssl_cacert_path)
+}
+
+resource "citrixadc_sslcertkey" "sslcacert" {
+  certkey = var.ssl_cacert_name
+  cert    = format("%s/%s", citrixadc_systemfile.ssl_cacert_copy.filelocation, citrixadc_systemfile.ssl_cacert_copy.filename)
 }
 
