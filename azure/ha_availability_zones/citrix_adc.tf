@@ -81,15 +81,22 @@ resource "azurerm_virtual_machine" "terraform-adc-machine" {
     computer_name  = format("Citrix-ADC-VPX-node-%v", count.index)
     admin_username = var.adc_admin_username
     admin_password = var.adc_admin_password
-    custom_data = jsonencode({
-      "vpx_config" = {
-        subnet_11 = var.server_subnet_address_prefix,
-        snip_11   = element(azurerm_network_interface.terraform-adc-client-interface.*.private_ip_address, count.index),
-        subnet_12 = var.client_subnet_address_prefix,
-        pvt_ip_12 = element(azurerm_network_interface.terraform-adc-server-interface.*.private_ip_address, count.index),
-      }
-      "ha_config" = { peer_node = count.index == 0 ? element(azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address, 1) : element(azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address, 0) }
-    })
+    custom_data = base64encode(<<-EOT
+      <NS-PRE-BOOT-CONFIG>
+        <NS-CONFIG>
+          %{if var.ha_for_internal_lb}
+            add ip ${azurerm_lb.tf_lb.frontend_ip_configuration.0.private_ip_address} ${cidrnetmask(azurerm_subnet.terraform-client-subnet.address_prefixes.0)} -type VIP
+          %{else}
+            add ip ${azurerm_public_ip.terraform-load-balancer-public-ip.0.ip_address} ${cidrnetmask(azurerm_subnet.terraform-client-subnet.address_prefixes.0)} -type VIP
+          %{endif}
+          add ip ${element(azurerm_network_interface.terraform-adc-client-interface.*.private_ip_address, count.index)} ${cidrnetmask(azurerm_subnet.terraform-client-subnet.address_prefixes.0)} -type SNIP
+          add ip ${element(azurerm_network_interface.terraform-adc-server-interface.*.private_ip_address, count.index)} ${cidrnetmask(azurerm_subnet.terraform-server-subnet.address_prefixes.0)} -type SNIP
+          set systemparameter -promptString "%u@%s"
+          add ha node 1 ${count.index == 0 ? element(azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address, 1) : element(azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address, 0)} -inc ENABLED
+        </NS-CONFIG>
+      </NS-PRE-BOOT-CONFIG>
+    EOT
+    )
   }
 
   os_profile_linux_config {

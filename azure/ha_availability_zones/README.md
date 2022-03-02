@@ -1,18 +1,47 @@
 # Citrix ADC HA pair with availability zones
 
 This folder contains the configuration scripts to deploy
+
 * A Virtual Network with 3 subnets and associated security groups and routing tables.
 * Two Citrix ADC instances configured in a High Availability setup.
 * A ubuntu bastion host with 1 NIC.
 
-# Resource group
+## Input Variables
+
+> The file `example.tfvars` is a variable definition file. This file can be given as an input to `terraform` to define the variables used in the configuration.
+> Use below example to load the variables from the file `example.tfvars`
+
+```bash
+terraform apply -var-file="example.tfvars"
+```
+
+> For more information on variable definition files, see [Terraform Variable Definitions](https://www.terraform.io/language/values/variables#variable-definitions-tfvars-files).
+
+```hcl
+# file: example.tfvars
+resource_group_name              = "<resource_group_name>"
+location                         = "eastus"
+virtual_network_address_space    = "10.0.0.0/16"
+management_subnet_address_prefix = "10.0.1.0/24"
+client_subnet_address_prefix     = "10.0.2.0/24"
+server_subnet_address_prefix     = "10.0.3.0/24"
+adc_admin_username               = "<adc-username>"
+adc_admin_password               = "<adc-password"
+ssh_public_key_file              = "~/.ssh/id_rsa.pub"
+ubuntu_vm_size                   = "Standard_A1_v2"
+ubuntu_admin_user                = "ubuntu"
+controlling_subnet               = "<restricted-cidr>" # to login to Citrix ADCs and Ubuntu host
+adc_vm_size                      = "Standard_F8s_v2"
+ha_for_internal_lb               = false # if true, then Azure ALB will be with public IP. If false, then Azure ALB will be with private IP.
+```
+
+## Resource group
 
 All resources are deployed in a single resource group.
 
 The name of the resource group can be changed through the `resource_group_name` input variable.
 
-
-# Virtual Network configuration
+## Virtual Network configuration
 
 All network interfaces are deployed inside a single Virtual Network.
 
@@ -31,7 +60,7 @@ The server subnet contains the ADC server interface where the SNIP is assigned.
 Any backed service hosts deployed will need to have an interface defined within this subnet
 so that the ADC can communicate with them through the SNIP address.
 
-## Security groups
+### Security groups
 
 There are 3 security groups each attached to a single subnet.
 
@@ -48,10 +77,10 @@ The server security group restricts traffic flow within the subnet itself.
 That means network interfaces belonging to this subnet will only be able to
 send and receive traffic only to other interfaces inside the subnet.
 
-# Citrix ADC configuration
+## Citrix ADC configuration
 
 The Citrix ADC instances are deployed as instances with 3 separate
-NICs each in a separate subnet. 
+NICs each in a separate subnet.
 
 The ADC bootstrap code will assign ip addresses to each interface
 according to the ip addresses assigned by Azure.
@@ -99,7 +128,7 @@ An SSH key is required when creating the ADC host.
 Password authentication is also allowed.
 Please choose a strong password to enhance security.
 
-# Bastion host
+## Bastion host
 
 Along with the Citrix ADC an ubuntu bastion host is deployed.
 

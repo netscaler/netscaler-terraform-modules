@@ -23,5 +23,5 @@ output "bastion_public_ip" {
 }
 
 output "alb_public_ip" {
-  value = azurerm_public_ip.terraform-load-balancer-public-ip.ip_address
+  value = try(azurerm_public_ip.terraform-load-balancer-public-ip.0.ip_address, null)
 }
