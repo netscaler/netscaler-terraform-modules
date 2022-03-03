@@ -9,6 +9,9 @@ variable "service1_ip" {
 variable "service1_port" {
 }
 
+variable "service1_servicetype" {
+}
+
 # SSL Service 2
 variable "service2_name" {
   default = "http_service2"
@@ -18,6 +21,9 @@ variable "service2_ip" {
 }
 
 variable "service2_port" {
+}
+
+variable "service2_servicetype" {
 }
 
 # Production SSL LB Vservice

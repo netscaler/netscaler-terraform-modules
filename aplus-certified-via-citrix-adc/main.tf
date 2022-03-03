@@ -1,5 +1,5 @@
 resource "citrixadc_service" "service1" {
-  servicetype = "HTTP"
+  servicetype = var.service1_servicetype
   name        = var.service1_name
   ipaddress   = var.service1_ip
   ip          = var.service1_ip
@@ -7,7 +7,7 @@ resource "citrixadc_service" "service1" {
 }
 
 resource "citrixadc_service" "service2" {
-  servicetype = "HTTP"
+  servicetype = var.service2_servicetype
   name        = var.service2_name
   ipaddress   = var.service2_ip
   ip          = var.service2_ip
