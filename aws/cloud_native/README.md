@@ -50,9 +50,11 @@ The configuration combines the process documented for [Deploying VPX HA with Pri
 ## Steps to Deploy:
 
 ### Prerequisites
-1. Terraform
+1. Terraform (preferably version: `1.1.7`)
 2. AWS CLI installed and configured using the command `aws configure`.
 3. Kubernetes configuration utility `kubectl` installed
+
+**Important Note:** These terraform deployments were validated on Terraform Version: `1.1.7`. Please ensure you install terraform version: `1.1.7`.
 
 ### Clone the GitHub Repo
 

@@ -44,3 +44,7 @@ variable "naming_prefix" {
   description = "Prefix to be used in the Name Tag of AWS Resources"
   default     = "Terraform"
 }
+
+variable "aws_availability_zones" {
+  description = "List of AWS Availability Zones to be used"
+}
