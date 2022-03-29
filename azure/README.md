@@ -3,6 +3,10 @@
 This folder contains terraform configuration scripts to
 deploy Citrix ADC on Microsoft Azure in various deployment scenarios.
 
+## 🔐 Authenticating to Azure in Terraform
+
+Please follow the instructions [HERE](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/azure_cli)
+
 ## Folder structure
 
 ### VPX deployments
