@@ -4,6 +4,11 @@ This folder contains terraform configuration scripts to
 deploy Citrix ADC on Google Cloud Platform (GCP) in various
 deployment scenarios.
 
+## 🔐 Authenticating GCP in Terraform
+
+Refer [HERE](https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/provider_reference#authentication)
+
+
 ## Folder structure
 
 ### VPX deployments
