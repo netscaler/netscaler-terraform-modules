@@ -4,6 +4,10 @@ This folder contains terraform configuration scripts to deploy Citrix ADC on AWS
 
 [Here](https://www.youtube.com/watch?v=LgGS0-Q5ODE&list=PLrUklKi1o_Zny9cgvjJ7xrBtcdOY_Kc6N&index=14&ab_channel=Citrix) is quick demo on using terraform cloud scripts to provision Citrix ADC in AWS.
 
+## 🔐 Authenticating AWS in Terraform
+
+Refer [HERE](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#authentication-and-configuration)
+
 ## Folder structure
 
 ### VPX deployments
