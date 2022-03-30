@@ -7,6 +7,18 @@ deploy Citrix ADC on Microsoft Azure in various deployment scenarios.
 
 Please follow the instructions [HERE](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/azure_cli)
 
+## How to change Citrix ADC Product in Terraform configuration files?
+
+A complete list of SKUs and Offers for Citrix ADC is available from the below command  
+> change the `location`, if required   
+
+```bash
+az vm image list --all --publisher citrix --offer netscalervpx --location eastus --output table
+```
+Select the appropriate `offer` and `sku` and replace in `storage_image_reference` and `plan` sections of `azure_virtual_machine` resource.
+
+
+
 ## Folder structure
 
 ### VPX deployments
