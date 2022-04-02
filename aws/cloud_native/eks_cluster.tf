@@ -31,7 +31,7 @@ module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "17.24.0"
   cluster_name    = var.cluster_name
-  cluster_version = "1.20"
+  cluster_version = "1.21"
   subnets         = aws_subnet.server.*.id
   # Variable to control EKS creation
   create_eks = var.create_eks
