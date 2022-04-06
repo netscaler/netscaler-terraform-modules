@@ -37,6 +37,16 @@ resource "aws_instance" "citrix_adc" {
     device_index         = 0
   }
 
+  network_interface {
+    network_interface_id = element(aws_network_interface.client.*.id, count.index)
+    device_index         = 1
+  }
+
+  network_interface {
+    network_interface_id = element(aws_network_interface.server.*.id, count.index)
+    device_index         = 2
+  }
+
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   iam_instance_profile = aws_iam_instance_profile.citrix_adc_ha_instance_profile.name
@@ -150,10 +160,10 @@ resource "aws_network_interface" "client" {
   subnet_id       = element(aws_subnet.client.*.id, count.index)
   security_groups = [aws_security_group.client.id]
 
-  attachment {
-    instance     = element(aws_instance.citrix_adc.*.id, count.index)
-    device_index = 1
-  }
+  #attachment {
+  #  instance     = element(aws_instance.citrix_adc.*.id, count.index)
+  #  device_index = 1
+  #}
 
   tags = {
     Name = format("Citrix ADC Client Interface HA Node %v", count.index)
@@ -166,10 +176,10 @@ resource "aws_network_interface" "server" {
   subnet_id       = element(aws_subnet.server.*.id, count.index)
   security_groups = [aws_security_group.server.id]
 
-  attachment {
-    instance     = element(aws_instance.citrix_adc.*.id, count.index)
-    device_index = 2
-  }
+  #attachment {
+  #  instance     = element(aws_instance.citrix_adc.*.id, count.index)
+  #  device_index = 2
+  #}
 
   # Disable Source Dest Check for Server ENI for Private IP to function
   source_dest_check = false
