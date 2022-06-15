@@ -19,6 +19,9 @@ Additionally we need to create iso images to attach to the ADC VMs as they boot 
 To do this we rely on the `mkisofs` utility available on Linux platforms.
 Make sure that terraform runs on a Linux host that has this utility installed.
 
+Also take note that we need to host the OVF and VMDK files in a host that has high speed connectivity with
+the target ESXi server. This is to reduce the time it takes to transfer these files.
+
 ## ESXi VM configuration
 
 In both use cases covered here we launch ADC with a single interface.
