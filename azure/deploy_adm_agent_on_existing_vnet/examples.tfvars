@@ -1,4 +1,4 @@
-resource_group_name  = "Rohit-ADM-Group"
+resource_group_name  = "terraform-resource-group"
 virtual_network_name = "terraform-virtual-network"
 subnet_name          = "terraform-agent-subnet"
 

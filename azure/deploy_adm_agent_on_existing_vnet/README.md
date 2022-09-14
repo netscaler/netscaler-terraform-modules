@@ -39,8 +39,7 @@ The remaining Inbound and Outbound security rules can be confugured in the simil
     * Password must have all the following: 1 lower case character, 1 upper case character, 1 number, and 1 special character.
     * The username and password can be set in the `examples.tfvars` file, For password set `adm_agent_admin_password` and for username `adm_agent_admin_username` values.
 
-* To Register the Citrix ADM Agent to your Citrix ADM Service, you need `serviceurl` and `activationcode` from the Citrix ADM Service. And the values can be set in `examples.tfvars` file. Refer [here](https://docs.citrix.com/en-us/citrix-application-delivery-management-service/faq.html#how-do-i-get-a-new-activation-code-if-i-lose-it) to generate activationcode and serviceurl.
-![activation_code](../../assets/generate_activation_code.png "activation_code")
+* To Register the Citrix ADM Agent to your Citrix ADM Service, you need `serviceurl` and `activationcode` from the Citrix ADM Service. And the values can be set in `examples.tfvars` file. Refer [here](../../how_to_generate_activationcode_in_ADMService.md "activation_code") to generate activationcode and serviceurl.
 
 * After registering the Citrix ADM Agent to the Citrix ADM Service you need to wait for 5 minutes for it to reflect in the Citrix ADM Service Console. Initially the state of the Citrix ADM Agent is `Down`. After some time the state will be `Up` automatically.
 
