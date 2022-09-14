@@ -13,6 +13,9 @@ This folder contains the configuration scripts to deploy
 
 * Terraform [Installation reference](https://learn.hashicorp.com/tutorials/terraform/install-cli)
 * Azure Authentication in Terraform [here](https://github.com/citrix/terraform-cloud-scripts/tree/master/azure#-authenticating-to-azure-in-terraform)
+* Before running the terraform scripts, you have to accept the terms to deploy the Citrix ADM Agent. To accept the terms run the following command. 
+    * `az vm image terms accept --offer "netscalervpx-130" --publisher "citrix" --plan "netscalervpxexpress"`  
+    * NOTE - To deploy Citrix ADM Agent version 13.0 set `offer` value to `netscaler-130-ma-service-agent`, to deploy Citrix ADM Agent version 13.1 set `offer` value as `netscaler-ma-service-agent` and run the command.
 
 ## Resource group
 
