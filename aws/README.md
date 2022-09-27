@@ -34,5 +34,4 @@ Their purpose is to verify the correct operation of the relevant VPX deployments
 
 The following folders contain various scripts and data files useful for VPX deployments on AWS.
 
-* `ami-maps`: Terraform variables files that contain maps for various Citrix ADC versions.
 * `scripts`: Helper scripts.
