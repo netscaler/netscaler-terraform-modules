@@ -9,8 +9,8 @@ Please follow the instructions [HERE](https://registry.terraform.io/providers/ha
 
 ## How to change Citrix ADC Product in Terraform configuration files?
 
-A complete list of SKUs and Offers for Citrix ADC is available from the below command  
-> change the `location`, if required   
+A complete list of SKUs and Offers for Citrix ADC is available from the below command
+> change the `location`, if required
 
 ```bash
 az vm image list --all --publisher citrix --offer netscalervpx --location eastus --output table
@@ -50,3 +50,26 @@ present in this folder.
 * [modules/standalone_3nic_with_simple_lb](./modules/standalone_3nic_with_simple_lb): Deploy [standalone_3nic](./standalone_3nic) with [simple_lb](./simple_lb)
 * [modules/ha_availability_set_with_simple_lb](modules/ha_availability_set_with_simple_lb): Deploy [ha_availability_set](./ha_availability_set) with [simple_lb_ha](./simple_lb_ha)
 * [modules/ha_availability_zones_with_simple_lb](modules/ha_availability_zones_with_simple_lb): Deploy [ha_availability_zones](./ha_availability_zones) with [simple_lb_ha](./simple_lb_ha)
+
+
+## Use case index
+
+|**Folder**|**Folder Link**|**Description**|
+|--|--|--|
+|**Deployments**|[HERE](./deployments/cloud_native/)|Cloud Native deployments|
+||[HERE](./deployments/standalone_3nic/)|Citrix ADC VPX Standalone 3 nic deployment on a new VNET infrastructure|
+||[HERE](./deployments/standalone_3nic_on_existing_vnet/)|Citrix ADC VPX Standalone 3 nic deployment on an existing VNET infrastructure|
+||[HERE](./deployments/ha_availability_set/)|Citrix ADC VPX in High Availability across two availability sets|
+||[HERE](./deployments/ha_availability_zones/)|Citrix ADC VPX in High Availability across two availability zones|
+||[HERE](./deployments/deploy_adm_agent/)|Deploy Citrix ADM Agent on a new VNET infrastructure|
+||[HERE](./deployments/deploy_adm_agent_on_existing_vnet)|Deploy Citrix ADM Agent on an existing VNET infrastructure|
+|**Examples**|[HERE](./examples/simple_lb/)|Citrix ADC deployment with Simple LB configuration across avilanility sets|
+||[HERE](./examples/simple_lb_ha/)|Citrix ADC deployment with Simple LB configuration across availability zones|
+
+# Modules
+
+|**Folder**|**Folder Link**|**Description**|
+|--|--|--|
+|**Module Usecases**|[HERE](./modules/ha_availability_set_with_simple_lb/)|Terraform module example to provisoin VPX in High Avilability across availability sets and a simple LB|
+||[HERE](./modules/ha_availability_zones_with_simple_lb/)|Terraform module example to provison VPX in High Availability across availability zones and a simple LB|
+||[HERE](./modules/standalone_3nic_with_simple_lb/)|Terraform module example to provision standalone VPX with simple LB|

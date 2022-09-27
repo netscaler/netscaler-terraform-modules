@@ -43,3 +43,15 @@ The following folders contain scripts to deploy additional virtual machines for 
 
     Additionally it can serve as an access point for the client interface serving traffic in the case of the VPX deployment with
     private ip.
+
+## Use case index
+
+|**Folder**|**Folder Link**|**Description**|
+|--|--|--|
+|**Deployments**|[HERE](./deployments/standalone_3nic/)|Citrix ADC VPX Standalone 3 nic deployment|
+||[HERE](./deployments/ha_pair_external_ip/)|Citrix ADC VPX in High Availability deployment with Public VIP and Public NSIP|
+||[HERE](./deployments/ha_pair_external_ip_additional_setup/)|Citrix ADC VPX in High Availability with Public VIP and Public SNIP and deployment with LB vserver|
+||[HERE](./deployments/ha_pair_private_ip/)|Citrix ADC VPX im High Availability deployment. No Public VIP and Public NSIP |
+||[HERE](./deployments/ha_pair_private_ip_additional_setup/)|Citrix ADC VPX in High Availability deployment with LB vserver. No Public VIP and Public NSIP |
+||[HERE](./deployments/ubuntu_host/)|Ubuntu host deployment|
+|**Examples**|[HERE](./examples/password_reset/))|How to reset Citrix ADC Password|
