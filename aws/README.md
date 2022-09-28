@@ -23,7 +23,8 @@ Users can deploy ADC using Terraform in 2 ways :-
 |**Deployments**|[HERE](./deployments/cloud_native/)|Cloud Native deployments|
 ||[HERE](./deployments/standalone_3nic/)|Citrix ADC VPX Standalone 3 nic deployment|
 ||[HERE](./deployments/ha_same_az/)|Citrix ADC VPX in High Availability within same availability zone|
-||[HERE](./deployments/ha_across_az/)|Citrix ADC VPX in High Availability across two availability zones **(Recommended for beginners)**|
+||[HERE](./deployments/ha_across_az/for_external_apps/)|Citrix ADC VPX in High Availability across two availability zones for External Apps **(Recommended for beginners)**|
+||[HERE](./deployments/ha_across_az/for_internal_apps/)|Citrix ADC VPX in High Availability across two availability zones for Internal Apps|
 |**Deploy and Config**|[HERE](./deploy_and_config/cluster/)|Citrix ADC Cluster configuration|
 ||[HERE](./deploy_and_config/simple_lb/)|Citrix ADC deployment with Simple LB configuration within availability zones|
 ||[HERE](./deploy_and_config/simple_lb_across_az/)|Citrix ADC deployment with Simple LB configuration across availability zones|
