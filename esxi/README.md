@@ -45,4 +45,4 @@ terraform apply -parallelism=1
 |**Folder**|**Folder Link**|**Description**|
 |--|--|--|
 |**Deployments**|[HERE](./deployments/standalone/)|Citrix ADC VPX Standalone deployment|
-||[HERE](./deployments/ha_pair/)|Citrix ADC VPX in High Availability|
+||[HERE](./deployments/ha_pair/)|Citrix ADC VPX in High Availability **(Recommended for beginners)**|

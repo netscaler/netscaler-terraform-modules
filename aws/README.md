@@ -1,4 +1,4 @@
-# AWS automation scripts
+# AWS Automation Scripts
 
 This folder contains terraform configuration scripts to deploy Citrix ADC on AWS in various deployment scenarios
 
@@ -11,10 +11,10 @@ Refer [HERE](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#a
 ## ADC Deployment with Terraform
 
 Users can deploy ADC using Terraform in 2 ways :-
-1. Using direct resources 
-2. Using custom Terraform modules 
+1. Using direct resources
+2. Using custom Terraform modules
 
-> For beginners we recommend to go with Resources approach for deployment, 
+> For beginners we recommend to go with Resources approach for deployment.
 
 ### ADC Deployment and Configuration using Resources
 
@@ -24,9 +24,9 @@ Users can deploy ADC using Terraform in 2 ways :-
 ||[HERE](./deployments/standalone_3nic/)|Citrix ADC VPX Standalone 3 nic deployment|
 ||[HERE](./deployments/ha_same_az/)|Citrix ADC VPX in High Availability within same availability zone|
 ||[HERE](./deployments/ha_across_az/)|Citrix ADC VPX in High Availability across two availability zones **(Recommended for beginners)**|
-|**DeployAndConfig**|[HERE](./examples/cluster/)|Citrix ADC Cluster configuration|
-||[HERE](./examples/simple_lb/)|Citrix ADC deployment with Simple LB configuration within avilanility zones|
-||[HERE](./examples/simple_lb_across_az/)|Citrix ADC deployment with Simple LB configuration across availability zones|
+|**Deploy and Config**|[HERE](./deploy_and_config/cluster/)|Citrix ADC Cluster configuration|
+||[HERE](./deploy_and_config/simple_lb/)|Citrix ADC deployment with Simple LB configuration within availability zones|
+||[HERE](./deploy_and_config/simple_lb_across_az/)|Citrix ADC deployment with Simple LB configuration across availability zones|
 
 ### ADC Deployment and Configuration using Modules
 
@@ -38,5 +38,5 @@ Users can deploy ADC using Terraform in 2 ways :-
 |**Modules Usecases**|[HERE](./modules_usecases/bastion_host/)|Terraform module to create a bastion ubuntu host|
 ||[HERE](./modules_usecases/standalone_3nic_citrixadc/)|Terraform module example to provision standalone 3nic|
 ||[HERE](./modules_usecases/ha_same_az/)|Terraform module example to provision VPXs in the same High Availability zone|
-||[HERE](./modules_usecases/ha_same_az_existing_vpc/)|Terraform module example to provision VPXs in the same High Availibility zone on the existing VPC infrastructure|
+||[HERE](./modules_usecases/ha_same_az_existing_vpc/)|Terraform module example to provision VPXs in the same High Availability zone on the existing VPC infrastructure|
 ||[HERE](./modules_usecases/ha_across_az/)|Terraform module example to provision VPXs across two High Availability zone|
