@@ -14,7 +14,7 @@ Post a successful deployment of VPX in your environment,leverage [Citrix ADC Ter
 
 # Beginners Guide to Terraform Cloud Scripts
 
-**VPX in AWS** - You can get started with [deploying Citrix ADC in High Availability across AWS Availability Zones](./aws/deployments/ha_across_az/)
+**VPX in AWS** - You can get started with [deploying Citrix ADC in High Availability across AWS Availability Zones](./aws/deployments/ha_across_az/for_external_apps/)
 
 **VPX in Azure** - You can get started with [deploying Citrix ADC in High Availability mode across Azure Availability Sets](./azure/deployments/ha_availability_set/)
 
