@@ -11,3 +11,10 @@ Post a successful deployment of VPX in your environment,leverage [Citrix ADC Ter
 > :round_pushpin:For ADC configurations post deployment , check out [ADC Terraform Provider](https://github.com/citrix/terraform-provider-citrixadc) or [Hashicorp registry](https://registry.terraform.io/providers/citrix/citrixadc/latest)
 
 > :envelope: For any immediate issues or help , reach out to us at appmodernization@citrix.com !
+
+# Beginners Guide to Terraform Cloud Scripts 
+
+VPX in AWS - You can get started with
+VPX in Azure - You can get started with
+VPX in GCP - You can get started with 
+VPX in ESXi - You can get started with
