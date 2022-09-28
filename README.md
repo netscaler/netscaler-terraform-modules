@@ -15,6 +15,9 @@ Post a successful deployment of VPX in your environment,leverage [Citrix ADC Ter
 # Beginners Guide to Terraform Cloud Scripts 
 
 VPX in AWS - You can get started with
+
 VPX in Azure - You can get started with
+
 VPX in GCP - You can get started with 
+
 VPX in ESXi - You can get started with
