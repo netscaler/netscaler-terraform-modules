@@ -39,3 +39,10 @@ To remove this race condition we advise to run the terraform apply command with 
 ```bash
 terraform apply -parallelism=1
 ```
+
+## Use case index
+
+|**Folder**|**Folder Link**|**Description**|
+|--|--|--|
+|**Deployments**|[HERE](./deployments/standalone/)|Citrix ADC VPX Standalone deployment|
+||[HERE](./deployments/ha_pair/)|Citrix ADC VPX in High Availability **(Recommended for beginners)**|
