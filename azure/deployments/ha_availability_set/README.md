@@ -18,7 +18,7 @@ This folder contains the configuration scripts to deploy
 * The terraform needs plugins to be installed in local folder so, use `terraform init` - It automatically installs the required plugins from the Terraform Registry.
 
 ### Step-2 Applying the Configuration 
-* Modify the `main.tf` (if necessary) and `examples.tfvars` to suit your own Azure configuration and Citrix ADM Agent deployment. 
+* Modify the `main.tf` (if necessary) and `examples.tfvars` to suit your Azure configuration and Citrix ADC deployment. 
 * Use `terraform plan -var-file examples.tfvars` to review the plan
 * Use `terraform apply -var-file examples.tfvars` to apply the configuration.
 
@@ -28,6 +28,11 @@ This folder contains the configuration scripts to deploy
 
 ### Step-4 Destroying your Configuration
 * To destroy the configuration use `terraform destroy -var-file examples.tfvars`.
+
+# Network Architecture diagram of a high availability deployment, using Azure Availability Set
+
+![netArchDiag_HA_Avil_Set](../../../assets/azure_deployment_assets/netArchDiag_HA_Avil_Set.png "netArchDiag_HA_Avil_Set")
+
 # Resource group
 
 All resources are deployed in a single resource group.
