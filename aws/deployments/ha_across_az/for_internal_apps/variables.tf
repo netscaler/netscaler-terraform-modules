@@ -1,119 +1,137 @@
-variable "vpx_ami_map" {
-  description = <<EOF
-
-AMI map for VPX
-Defaults to VPX Express 12.1-51.20
-
-EOF
-
-  # Citrix ADC VPX 13.0-83.27 (Oct 22, 2021) image
-  default = {
-    "us-east-1"      = "ami-0f684afd1827de688"
-    "us-east-2"      = "ami-0c8acb930b10701b5"
-    "us-west-1"      = "ami-03c9c13ba5319850e"
-    "us-west-2"      = "ami-0fdf86c5ff6a6f943"
-    "ca-central-1"   = "ami-029b7948b62000522"
-    "ap-south-1"     = "ami-09f3fca0ae966dd5f"
-    "ap-northeast-1" = "ami-00bfcb562c12ea14e"
-    "ap-northeast-2" = "ami-0b1ba7e67baf992fc"
-    "ap-southeast-1" = "ami-0e119ee6998148e2f"
-    "ap-southeast-2" = "ami-0e2f226c6c787767e"
-    "eu-central-1"   = "ami-0d7569522c1683704"
-    "eu-north-1"     = "ami-04acd91b4b1b529c4"
-    "eu-west-1"      = "ami-036fac39753f28d9e"
-    "eu-west-2"      = "ami-049b008d3958a5dd6"
-    "eu-west-3"      = "ami-0ab1c3388ec33946c"
-    "sa-east-1"      = "ami-057457e9c3ee2ebf6"
-  }
-}
-
-variable "ns_instance_type" {
-  description = <<EOF
-EC2 instance type.
-
-The following values are allowed:
-
-t2.medium
-t2.large
-t2.xlarge
-t2.2xlarge
-m3.large
-m3.xlarge
-m3.2xlarge
-m4.large
-m4.xlarge
-m4.2xlarge
-m4.4xlarge
-m4.10xlarge
-m5.xlarge
-c4.large
-c4.xlarge
-c4.2xlarge
-c4.4xlarge
-c4.8xlarge
-
-EOF
-
-  default = "m5.xlarge"
-}
-
-
-variable "vpc_cidr_block" {
-  description = "The CIDR block that will be used for all needed subnets"
-}
-
-variable "management_subnet_cidr_blocks" {
-  description = "The CIDR blocks that will be used for the management subnet. Must be contained inside the VPC cidr block."
-  type        = list(string)
-}
-
-variable "client_subnet_cidr_blocks" {
-  description = "The CIDR blocks that will be used for the client subnet. Must be contained inside the VPC cidr block."
-  type        = list(string)
-}
-
-variable "server_subnet_cidr_blocks" {
-  description = "The CIDR blocks that will be used for the server subnet. Must be contained inside the VPC cidr block."
-  type        = list(string)
-}
-
-variable "restricted_mgmt_access_cidr_block" {
-  description = "The CIDR block of the machines that will SSH into the NSIPs of the VPX HA pair."
-}
-
-variable "aws_ssh_key_name" {
-  description = "SSH key name stored on AWS EC2 to access EC2 instances"
-}
-
-variable "aws_ssh_public_key" {
-  sensitive   = true
-  description = "The public part of the SSH key you will use to access EC2 instances"
-}
-
 variable "aws_region" {
-  description = "The AWS region to create entities in."
-  default     = "us-east-1"
+  type        = string
+  description = "The AWS region to create things in"
 }
 
 variable "aws_availability_zones" {
-  description = "List of two availability zones."
   type        = list(string)
+  description = "List of 2 availability zones to create resources in. "
 }
 
-variable "aws_access_key" {
-  sensitive   = true
-  description = "The AWS access key"
+variable "vpc_cidr" {
+  type        = string
+  description = "The CIDR block that will be used for all needed subnets"
 }
 
-variable "aws_secret_key" {
-  sensitive   = true
-  description = "The AWS secret key"
+variable "management_subnet_cidr_list" {
+  type        = list(string)
+  description = "The CIDR blocks that will be used for the management subnet. Must be contained inside the VPC cidr block."
 }
+
+variable "client_subnet_cidr_list" {
+  type        = list(string)
+  description = "The CIDR blocks that will be used for the client subnet. Must be contained inside the VPC cidr block."
+}
+
+variable "server_subnet_cidr_list" {
+  type        = list(string)
+  description = "The CIDR blocks that will be used for the server subnet. Must be contained inside the VPC cidr block."
+}
+
+variable "server_subnet_masks" {
+  type        = list(string)
+  description = "List of 2 subnet masks for the server networks."
+}
+
+variable "citrixadc_instance_type" {
+  type        = string
+  description = "CitrixADC VPX EC2 instance type."
+  default     = "m5.xlarge"
+}
+
+variable "citrixadc_management_access_cidr" {
+  type        = string
+  description = "The CIDR block of the machines that will SSH into the NSIPs of the VPX HA pair."
+}
+
+variable "new_keypair_required" {
+  type        = bool
+  description = "if `true` (default), terraform creates a new EC2 keypair and associates it to Citrix ADC VPXs. If `false` terraform expects an existing keypair name via `var.aws_ssh_keypair_name` variable"
+  default     = true
+}
+
+variable "aws_ssh_keypair_name" {
+  type        = string
+  description = "SSH key name stored on AWS EC2 to access EC2 instances"
+}
+
+variable "ssh_public_key_filename" {
+  type        = string
+  description = "The public part of the SSH key you will use to access EC2 instances"
+}
+
+variable "citrixadc_management_password" {
+  type        = string
+  description = "The new ADC password that will replace the default one on both ADC instances."
+}
+
+variable "citrixadc_rpc_node_password" {
+  type        = string
+  description = "The new ADC RPC node password that will replace the default one on both ADC instances. [Learn More about RPCNode](https://docs.citrix.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/change-rpc-node-password.html)"
+}
+
+variable "citrixadc_product_version" {
+  type        = string
+  description = "Citrix ADC product version"
+  default     = "13.1"
+}
+
+variable "_citrixadc_aws_product_map" {
+  type        = map(string)
+  description = "Map of AWS product names to their product IDs"
+  default = {
+    "Citrix ADC VPX - Customer Licensed" : "63425ded-82f0-4b54-8cdd-6ec8b94bd4f8",
+    "Citrix ADC VPX Express - 20 Mbps" : "daf08ece-57d1-4c0a-826a-b8d9449e3930",
+    "Citrix ADC VPX Standard Edition - 10 Mbps" : "85bb75fd-34a4-4395-bb19-04b71b20cf3e",
+    "Citrix ADC VPX Standard Edition - 200 Mbps" : "dd84ff86-4cea-4c4b-8811-726d079324c7",
+    "Citrix ADC VPX Standard Edition - 1000 Mbps" : "8328715f-8ad4-4121-af6f-77466a6fd325",
+    "Citrix ADC VPX Standard Edition - 3Gbps" : "ecde3c83-e3df-4310-931c-be7164f3c504",
+    "Citrix ADC VPX Standard Edition - 5Gbps" : "5b010f6b-96e4-4f67-bd66-07022dd5dfec",
+    "Citrix ADC VPX Premium Edition - 10 Mbps" : "0f7c03e9-ccf7-4b68-815f-0696e1e5770f",
+    "Citrix ADC VPX Premium Edition - 200 Mbps" : "a277a667-7f08-44c9-9787-59424b2c50fa",
+    "Citrix ADC VPX Premium Edition - 1000 Mbps" : "198e217b-a775-4322-8bfe-ab1ea7d598f4",
+    "Citrix ADC VPX Premium Edition - 3Gbps" : "302979c1-fe98-4344-8a11-c26c88f55e01",
+    "Citrix ADC VPX Premium Edition - 5Gbps" : "755645a9-d61f-4350-bb91-a6ef204debb3",
+    "Citrix ADC VPX Advanced Edition - 10 Mbps" : "9ff329b9-3273-4ab0-a7db-d1bd714d4bb3",
+    "Citrix ADC VPX Advanced Edition - 200 Mbps" : "fff7ca8f-96a9-4ea7-afa1-279b0d23fe3c",
+    "Citrix ADC VPX Advanced Edition - 1000 Mbps" : "4e123cf4-fe4c-4afd-a11e-b4280a522de5",
+    "Citrix ADC VPX Advanced Edition - 3Gbps" : "d0ebd087-5a71-47e4-8eb0-8bbac8593b43",
+    "Citrix ADC VPX Advanced Edition - 5Gbps" : "f67de268-1a70-477e-b135-bf789a9e1d76",
+  }
+}
+variable "citrixadc_product_name" {
+  type        = string
+  description = <<EOF
+  CitrixADC Product Name: Select the product name from the list of available products.
+  Options:
+    Citrix ADC VPX - Customer Licensed
+    Citrix ADC VPX Express - 20 Mbps
+    Citrix ADC VPX Standard Edition - 10 Mbps
+    Citrix ADC VPX Standard Edition - 200 Mbps
+    Citrix ADC VPX Standard Edition - 1000 Mbps
+    Citrix ADC VPX Standard Edition - 3Gbps
+    Citrix ADC VPX Standard Edition - 5Gbps
+    Citrix ADC VPX Premium Edition - 10 Mbps
+    Citrix ADC VPX Premium Edition - 200 Mbps
+    Citrix ADC VPX Premium Edition - 1000 Mbps
+    Citrix ADC VPX Premium Edition - 3Gbps
+    Citrix ADC VPX Premium Edition - 5Gbps
+    Citrix ADC VPX Advanced Edition - 10 Mbps
+    Citrix ADC VPX Advanced Edition - 200 Mbps
+    Citrix ADC VPX Advanced Edition - 1000 Mbps
+    Citrix ADC VPX Advanced Edition - 3Gbps
+    Citrix ADC VPX Advanced Edition - 5Gbps
+  EOF
+  default     = "Citrix ADC VPX - Customer Licensed"
+}
+
 
 variable "internal_lbvserver_vip" {
+  type        = string
   description = "LB Vserver VIP for internal apps. This VIP should be  an IP address within the `internal_lbvserver_vip_cidr_block` range"
 }
 
 variable "internal_lbvserver_vip_cidr_block" {
+  type        = string
   description = "CIDR block for LB Vserver for internal apps. This CIDR block should be outside the VPC CIDR block."
 }
