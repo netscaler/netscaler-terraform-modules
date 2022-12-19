@@ -247,7 +247,7 @@ resource "aws_instance" "citrixadc_primary" {
 }
 
 resource "aws_instance" "citrixadc_secondary" {
-  depends_on = [aws_instance.citrixadc_primary, aws_instance.citrixadc_secondary]
+  depends_on = [aws_instance.citrixadc_primary]
 
   tags = {
     Name = "Citrix ADC HA Node SECONDARY"
@@ -296,10 +296,6 @@ resource "aws_instance" "citrixadc_secondary" {
   EOF
   )
 }
-# # Secondary vpx firstboot commands
-#     add ha node 1 ${module.citrixadc_primary.citrixadc_management_private_ip} -inc ENABLED
-#     add ipset ha_ipset
-#     bind ipset ha_ipset ${module.citrixadc_secondary.citrixadc_client_private_ip}
 
 resource "aws_iam_role_policy" "citrix_adc_ha_policy" {
   name = "citrix_adc_ha_policy"
