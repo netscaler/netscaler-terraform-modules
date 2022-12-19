@@ -322,7 +322,7 @@ resource "aws_network_interface" "client" {
   security_groups = [aws_security_group.client.id]
 
   tags = {
-    Name = "Citrix ADC Client Interface"
+    Name = format("Citrix ADC Client Interface HA Node %v", count.index)
   }
 }
 
@@ -333,7 +333,7 @@ resource "aws_network_interface" "server" {
   security_groups = [aws_security_group.server.id]
 
   tags = {
-    Name = "Citrix ADC Server Interface"
+    Name = format("Citrix ADC Server Interface HA Node %v", count.index)
   }
 }
 

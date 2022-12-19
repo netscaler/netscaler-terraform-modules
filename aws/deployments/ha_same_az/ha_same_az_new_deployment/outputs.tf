@@ -4,7 +4,6 @@ output "citrixadc_management_public_ips" {
 }
 
 output "citrixadc_client_public_ip" {
-  description = "IP address which clients on the data plain will use to access backend services."
   value       = aws_eip.client.public_ip
 }
 

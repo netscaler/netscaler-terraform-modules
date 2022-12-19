@@ -12,7 +12,7 @@ At the end of a successful deployment, _inter alia_, the following resources wil
 - 3 EIPs
   - 2 for accessing CitrixADC VPX management interface
   - 1 for client traffic
-- Required security groups, etc
+- Required security groups, IAM Role etc
 
 ## Folder Structure
 
