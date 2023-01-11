@@ -245,34 +245,38 @@ resource "azurerm_network_interface" "terraform-adc-server-interface" {
   count = 2
 }
 
-# Citrix ADC instance is deployment
-resource "azurerm_virtual_machine" "terraform-adc-machine" {
-  name                = format("terraform-adc-machine-node-%v", count.index)
+# Primary Citrix ADC instance deployment
+resource "azurerm_virtual_machine" "terraform-primary-adc-machine" {
+  name                = format("terraform-adc-machine-node-0")
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   location            = var.location
   vm_size             = var.adc_vm_size
 
   network_interface_ids = [
-    element(azurerm_network_interface.terraform-adc-management-interface.*.id, count.index),
-    element(azurerm_network_interface.terraform-adc-client-interface.*.id, count.index),
-    element(azurerm_network_interface.terraform-adc-server-interface.*.id, count.index),
+    azurerm_network_interface.terraform-adc-management-interface[0].id,
+    azurerm_network_interface.terraform-adc-client-interface[0].id,
+    azurerm_network_interface.terraform-adc-server-interface[0].id,
   ]
 
-  primary_network_interface_id = element(azurerm_network_interface.terraform-adc-management-interface.*.id, count.index)
+  primary_network_interface_id = azurerm_network_interface.terraform-adc-management-interface[0].id
 
   os_profile {
-    computer_name  = format("Citrix-ADC-VPX-node-%v", count.index)
+    computer_name  = "Citrix-ADC-VPX-node-0"
     admin_username = var.adc_admin_username
     admin_password = var.adc_admin_password
-    custom_data = jsonencode({
-      "vpx_config" = {
-        subnet_11 = var.server_subnet_address_prefix,
-        snip_11   = element(azurerm_network_interface.terraform-adc-client-interface.*.private_ip_address, count.index),
-        subnet_12 = var.client_subnet_address_prefix,
-        pvt_ip_12 = element(azurerm_network_interface.terraform-adc-server-interface.*.private_ip_address, count.index),
-      }
-      "ha_config" = { peer_node = count.index == 0 ? element(azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address, 1) : element(azurerm_network_interface.terraform-adc-management-interface.*.private_ip_address, 0) }
-    })
+    custom_data = base64encode(<<-EOF
+    <NS-PRE-BOOT-CONFIG>
+      <NS-CONFIG>
+        set systemparameter -promptString "%u@%s"
+        add ns ip ${azurerm_network_interface.terraform-adc-client-interface[0].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
+        add ns ip ${azurerm_network_interface.terraform-adc-server-interface[0].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
+        add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -inc ENABLED
+        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+      </NS-CONFIG>
+    </NS-PRE-BOOT-CONFIG>
+  EOF
+  )
   }
 
   availability_set_id = azurerm_availability_set.terraform-availability-set.id
@@ -288,7 +292,7 @@ resource "azurerm_virtual_machine" "terraform-adc-machine" {
   delete_os_disk_on_termination = true
 
   storage_os_disk {
-    name              = format("terraform-citrixadc-os-disk-node-%v", count.index)
+    name              = "terraform-citrixadc-os-disk-node-0"
     caching           = "ReadWrite"
     managed_disk_type = "Standard_LRS"
     create_option     = "FromImage"
@@ -315,7 +319,82 @@ resource "azurerm_virtual_machine" "terraform-adc-machine" {
     azurerm_lb_rule.allow_http,
   ]
 
-  count = 2
+}
+
+# Secondary Citrix ADC instance deployment
+resource "azurerm_virtual_machine" "terraform-secondary-adc-machine" {
+  name                = "terraform-adc-machine-node-1"
+  resource_group_name = azurerm_resource_group.terraform-resource-group.name
+  location            = var.location
+  vm_size             = var.adc_vm_size
+
+  network_interface_ids = [
+    azurerm_network_interface.terraform-adc-management-interface[1].id,
+    azurerm_network_interface.terraform-adc-client-interface[1].id,
+    azurerm_network_interface.terraform-adc-server-interface[1].id,
+  ]
+
+  primary_network_interface_id = azurerm_network_interface.terraform-adc-management-interface[1].id
+
+  os_profile {
+    computer_name  = "Citrix-ADC-VPX-node-1"
+    admin_username = var.adc_admin_username
+    admin_password = var.adc_admin_password
+    custom_data = base64encode(<<-EOF
+    <NS-PRE-BOOT-CONFIG>
+      <NS-CONFIG>
+        set systemparameter -promptString "%u@%s"
+        add ns ip ${azurerm_network_interface.terraform-adc-client-interface[1].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
+        add ns ip ${azurerm_network_interface.terraform-adc-server-interface[1].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
+        add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -inc ENABLED
+        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+      </NS-CONFIG>
+    </NS-PRE-BOOT-CONFIG>
+  EOF
+  )
+  }
+
+  availability_set_id = azurerm_availability_set.terraform-availability-set.id
+
+  os_profile_linux_config {
+    disable_password_authentication = false
+    ssh_keys {
+      key_data = file(var.ssh_public_key_file)
+      path     = format("/home/%v/.ssh/authorized_keys", var.adc_admin_username)
+    }
+  }
+
+  delete_os_disk_on_termination = true
+
+  storage_os_disk {
+    name              = "terraform-citrixadc-os-disk-node-1"
+    caching           = "ReadWrite"
+    managed_disk_type = "Standard_LRS"
+    create_option     = "FromImage"
+  }
+
+  storage_image_reference {
+    publisher = "citrix"
+    offer     = "netscalervpx-130"
+    sku       = "netscalervpxexpress"
+    version   = "latest"
+  }
+
+  plan {
+    name      = "netscalervpxexpress"
+    publisher = "citrix"
+    product   = "netscalervpx-130"
+  }
+
+  depends_on = [
+    azurerm_subnet_network_security_group_association.server-subnet-association,
+    azurerm_subnet_network_security_group_association.client-subnet-association,
+    azurerm_subnet_network_security_group_association.management-subnet-association,
+    azurerm_network_interface_backend_address_pool_association.tf_assoc,
+    azurerm_lb_rule.allow_http,
+    azurerm_virtual_machine.terraform-primary-adc-machine,
+  ]
 }
 
 # Azure Load-balancer 
