@@ -8,17 +8,17 @@ This folder contains the configuration scripts to deploy
 
 ## Input Variables
 
-> The file `example.tfvars` is a variable definition file. This file can be given as an input to `terraform` to define the variables used in the configuration.
-> Use below example to load the variables from the file `example.tfvars`
+> The file `examples.tfvars` is a variable definition file. This file can be given as an input to `terraform` to define the variables used in the configuration.
+> Use below example to load the variables from the file `examples.tfvars`
 
 ```bash
-terraform apply -var-file="example.tfvars"
+terraform apply -var-file="examples.tfvars"
 ```
 
 > For more information on variable definition files, see [Terraform Variable Definitions](https://www.terraform.io/language/values/variables#variable-definitions-tfvars-files).
 
 ```hcl
-# file: example.tfvars
+# file: examples.tfvars
 resource_group_name              = "<resource_group_name>"
 location                         = "eastus"
 virtual_network_address_space    = "10.0.0.0/16"
