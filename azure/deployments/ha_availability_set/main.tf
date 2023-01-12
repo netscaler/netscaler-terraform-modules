@@ -247,7 +247,7 @@ resource "azurerm_network_interface" "terraform-adc-server-interface" {
 
 # Primary Citrix ADC instance deployment
 resource "azurerm_virtual_machine" "terraform-primary-adc-machine" {
-  name                = format("terraform-adc-machine-node-0")
+  name                = "terraform-adc-machine-node-0"
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   location            = var.location
   vm_size             = var.adc_vm_size
