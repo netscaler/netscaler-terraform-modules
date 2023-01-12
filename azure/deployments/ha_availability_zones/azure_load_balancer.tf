@@ -21,7 +21,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "tf_assoc"
 }
 
 resource "azurerm_lb_rule" "allow_http" {
-  resource_group_name            = azurerm_resource_group.terraform-resource-group.name
   loadbalancer_id                = azurerm_lb.tf_lb.id
   name                           = "LBRule"
   protocol                       = "Tcp"
@@ -32,7 +31,7 @@ resource "azurerm_lb_rule" "allow_http" {
   idle_timeout_in_minutes        = 4
   load_distribution              = "Default"
   probe_id                       = azurerm_lb_probe.tf_probe.id
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.tf_backend_pool.id
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tf_backend_pool.id]
 }
 
 resource "azurerm_lb_backend_address_pool" "tf_backend_pool" {
@@ -41,7 +40,6 @@ resource "azurerm_lb_backend_address_pool" "tf_backend_pool" {
 }
 
 resource "azurerm_lb_probe" "tf_probe" {
-  resource_group_name = azurerm_resource_group.terraform-resource-group.name
   loadbalancer_id     = azurerm_lb.tf_lb.id
   name                = "http-probe"
   port                = 9000
