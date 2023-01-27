@@ -16,7 +16,7 @@ which is used to serve backend server traffic.
 
 There are input variables defined in several files.
 
-There is a sample variables file in this folder for reference [sample.tfvars](./sample.tfvars).
+There is a sample variables file in this folder for reference [examples.tfvars](./examples.tfvars).
 
 ## Network configuration
 
