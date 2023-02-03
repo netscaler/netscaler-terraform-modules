@@ -62,4 +62,5 @@ variable "zones" {
 
 variable "citrixadc_rpc_node_password" {
   description = "The new ADC RPC node password that will replace the default one on both ADC instances. [Learn More about RPCNode](https://docs.citrix.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/change-rpc-node-password.html)"
+  sensitive = true
 }
