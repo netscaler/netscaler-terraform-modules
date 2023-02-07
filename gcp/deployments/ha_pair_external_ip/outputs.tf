@@ -1,3 +1,14 @@
+output "primary_public_nsip" {
+  value = google_compute_address.management_external_address[0].address
+}
+
+output "secondary_public_nsip" {
+  value = google_compute_address.management_external_address[1].address
+}
+output "public_vip" {
+  value = google_compute_address.client_external_address.address
+}
+
 output "primary_private_nsip" {
   value = google_compute_instance.adc_primary.network_interface[0].network_ip
 }
@@ -24,4 +35,7 @@ output "secondary_private_snip" {
 
 output "primary_compute_node_id" {
   value = google_compute_instance.adc_primary.instance_id
+}
+output "secondary_compute_node_id" {
+  value = google_compute_instance.adc_secondary.instance_id
 }
