@@ -10,7 +10,7 @@ Post a successful deployment of VPX in your environment,leverage [Citrix ADC Ter
 
 > :round_pushpin:For ADC configurations post deployment , check out [ADC Terraform Provider](https://github.com/citrix/terraform-provider-citrixadc) or [Hashicorp registry](https://registry.terraform.io/providers/citrix/citrixadc/latest)
 
-> :envelope: For any immediate issues or help , reach out to us at appmodernization@citrix.com !
+> :envelope: For any immediate issues or help , reach out to us at NetScaler-AutomationToolkit@cloud.com !
 
 # Beginners Guide to Terraform Cloud Scripts
 
