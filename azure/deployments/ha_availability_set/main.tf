@@ -301,12 +301,12 @@ resource "azurerm_virtual_machine" "terraform-primary-adc-machine" {
   storage_image_reference {
     publisher = "citrix"
     offer     = "netscalervpx-130"
-    sku       = "netscalervpxexpress"
+    sku       = "netscalerbyol"
     version   = "latest"
   }
 
   plan {
-    name      = "netscalervpxexpress"
+    name      = "netscalerbyol"
     publisher = "citrix"
     product   = "netscalervpx-130"
   }
@@ -377,12 +377,12 @@ resource "azurerm_virtual_machine" "terraform-secondary-adc-machine" {
   storage_image_reference {
     publisher = "citrix"
     offer     = "netscalervpx-130"
-    sku       = "netscalervpxexpress"
+    sku       = "netscalerbyol"
     version   = "latest"
   }
 
   plan {
-    name      = "netscalervpxexpress"
+    name      = "netscalerbyol"
     publisher = "citrix"
     product   = "netscalervpx-130"
   }
