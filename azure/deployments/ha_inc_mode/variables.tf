@@ -1,11 +1,3 @@
-# variable "netscaler1_nsip" {
-#   type        = string
-#   description = "NetScaler1 IP Address"
-# }
-# variable "netscaler2_nsip" {
-#   type        = string
-#   description = "NetScaler2 IP Address"
-# }
 variable "adc_admin_username" {
   description = "User name for the Citrix ADC admin user."
   default     = "nsroot"
@@ -15,6 +7,9 @@ variable "adc_admin_password" {
 }
 variable "management_subnet_address_prefix" {
   description = "The address prefix that will be used for the management subnet. Must be contained inside the VNet address space"
+}
+variable "client_subnet_address_prefix" {
+  description = "The address prefix that will be used for the client subnet. Must be contained inside the VNet address space"
 }
 variable "citrixadc_rpc_node_password" {
   type        = string
