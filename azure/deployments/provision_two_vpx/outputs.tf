@@ -30,22 +30,10 @@ output "alb_public_ip" {
   value = azurerm_public_ip.terraform-load-balancer-public-ip.ip_address
 }
 
-output "private_management_snips" {
-  value = [for nic in azurerm_network_interface.terraform-adc-management-interface : nic.ip_configuration[1].private_ip_address]
-}
-
 output "alb_private_mgmt_ip" {
-  value = azurerm_lb.tf_lb_mgmt.private_ip_address
+  value = azurerm_lb.tf_lb_mgmt.frontend_ip_configuration[0].private_ip_address
 }
 
-output "private_snips_server" {
-  value = azurerm_network_interface.terraform-adc-server-interface.*.private_ip_address
-}
-
-output "alb_id" {
-  value = azurerm_lb.tf_lb.id
-}
-
-output "alb_mgmt_id" {
-  value = azurerm_lb.tf_lb_mgmt.id
+output "adc_management_secondary_ips" {
+  value       = azurerm_network_interface.terraform-adc-management-interface[*].ip_configuration[1].private_ip_address
 }

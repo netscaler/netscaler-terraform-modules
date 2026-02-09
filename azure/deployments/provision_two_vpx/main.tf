@@ -69,6 +69,21 @@ resource "azurerm_network_security_rule" "terraform-allow-all-from-controlling-s
   network_security_group_name = azurerm_network_security_group.terraform-management-subnet-security-group.name
 }
 
+// Allow http for terraform provisioner connectivity tests. This can be removed later.
+resource "azurerm_network_security_rule" "terraform-allow-http-for-terraform" {
+  name                        = "terraform-allow-http-for-terraform"
+  priority                    = 900
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["80"]
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.terraform-resource-group.name
+  network_security_group_name = azurerm_network_security_group.terraform-management-subnet-security-group.name
+}
+
 resource "azurerm_subnet_network_security_group_association" "client-subnet-association" {
   subnet_id                 = azurerm_subnet.terraform-client-subnet.id
   network_security_group_id = azurerm_network_security_group.terraform-client-subnet-security-group.id
@@ -142,6 +157,7 @@ resource "azurerm_public_ip" "terraform-ubuntu-public-ip" {
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   location            = var.location
   allocation_method   = "Static"
+  sku = "Standard"
 }
 
 resource "azurerm_network_interface" "terraform-ubuntu-management-interface" {
@@ -193,6 +209,7 @@ resource "azurerm_public_ip" "terraform-adc-management-public-ip" {
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   location            = var.location
   allocation_method   = "Static"
+  sku                 = "Standard"
 
   count = 2
 }
@@ -272,23 +289,20 @@ resource "azurerm_virtual_machine" "terraform-primary-adc-machine" {
     computer_name  = "Citrix-ADC-VPX-node-0"
     admin_username = var.adc_admin_username
     admin_password = var.adc_admin_password
-    custom_data = base64encode(<<-EOF
-    <NS-PRE-BOOT-CONFIG>
-      <NS-CONFIG>
-        set systemparameter -promptString "%u@%s"
-        add ns ip ${azurerm_network_interface.terraform-adc-client-interface[0].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type VIP
-        add ns ip ${azurerm_network_interface.terraform-adc-server-interface[0].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
-        add ns ip ${azurerm_network_interface.terraform-adc-client-interface[1].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type VIP
-        add ns ip ${azurerm_network_interface.terraform-adc-management-interface[0].ip_configuration[1].private_ip_address} ${cidrnetmask(var.management_subnet_address_prefix)} -type SNIP -mgmtAccess ENABLED
-        add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} 
-        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-        add ipset ipset1
-        bind ipset ipset1 ${azurerm_network_interface.terraform-adc-server-interface[0].private_ip_address} 
-      </NS-CONFIG>
-    </NS-PRE-BOOT-CONFIG>
-  EOF
-  )
+  #   custom_data = base64encode(<<-EOF
+  #   <NS-PRE-BOOT-CONFIG>
+  #     <NS-CONFIG>
+  #       set systemparameter -promptString "%u@%s"
+  #       add ns ip ${azurerm_network_interface.terraform-adc-client-interface[0].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
+  #       add ns ip ${azurerm_network_interface.terraform-adc-server-interface[0].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
+  #       add ns ip ${azurerm_network_interface.terraform-adc-management-interface[0].ip_configuration[1].private_ip_address} ${cidrnetmask(var.management_subnet_address_prefix)} -type SNIP -mgmtAccess ENABLED
+  #       add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -inc ENABLED
+  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+  #     </NS-CONFIG>
+  #   </NS-PRE-BOOT-CONFIG>
+  # EOF
+  # )
   }
 
   availability_set_id = azurerm_availability_set.terraform-availability-set.id
@@ -330,9 +344,7 @@ resource "azurerm_virtual_machine" "terraform-primary-adc-machine" {
     azurerm_network_interface_backend_address_pool_association.tf_assoc,
     azurerm_network_interface_backend_address_pool_association.tf_assoc_mgmt,
     azurerm_lb_rule.allow_http,
-    azurerm_lb_rule.allow_https,
     azurerm_lb_rule.allow_http_mgmt,
-    azurerm_lb_rule.allow_https_mgmt,
   ]
 
 }
@@ -356,19 +368,20 @@ resource "azurerm_virtual_machine" "terraform-secondary-adc-machine" {
     computer_name  = "Citrix-ADC-VPX-node-1"
     admin_username = var.adc_admin_username
     admin_password = var.adc_admin_password
-    custom_data = base64encode(<<-EOF
-    <NS-PRE-BOOT-CONFIG>
-      <NS-CONFIG>
-        set systemparameter -promptString "%u@%s"
-        add ns ip ${azurerm_network_interface.terraform-adc-server-interface[1].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
-        add ns ip ${azurerm_network_interface.terraform-adc-management-interface[1].ip_configuration[1].private_ip_address} ${cidrnetmask(var.management_subnet_address_prefix)} -type SNIP -mgmtAccess ENABLED
-        add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} 
-        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-        set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-      </NS-CONFIG>
-    </NS-PRE-BOOT-CONFIG>
-  EOF
-  )
+  #   custom_data = base64encode(<<-EOF
+  #   <NS-PRE-BOOT-CONFIG>
+  #     <NS-CONFIG>
+  #       set systemparameter -promptString "%u@%s"
+  #       add ns ip ${azurerm_network_interface.terraform-adc-client-interface[1].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
+  #       add ns ip ${azurerm_network_interface.terraform-adc-server-interface[1].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
+  #       add ns ip ${azurerm_network_interface.terraform-adc-management-interface[1].ip_configuration[1].private_ip_address} ${cidrnetmask(var.management_subnet_address_prefix)} -type SNIP -mgmtAccess ENABLED
+  #       add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -inc ENABLED
+  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
+  #     </NS-CONFIG>
+  #   </NS-PRE-BOOT-CONFIG>
+  # EOF
+  # )
   }
 
   availability_set_id = azurerm_availability_set.terraform-availability-set.id
@@ -410,9 +423,7 @@ resource "azurerm_virtual_machine" "terraform-secondary-adc-machine" {
     azurerm_network_interface_backend_address_pool_association.tf_assoc,
     azurerm_network_interface_backend_address_pool_association.tf_assoc_mgmt,
     azurerm_lb_rule.allow_http,
-    azurerm_lb_rule.allow_https,
     azurerm_lb_rule.allow_http_mgmt,
-    azurerm_lb_rule.allow_https_mgmt,
     azurerm_virtual_machine.terraform-primary-adc-machine,
   ]
 }
@@ -423,7 +434,7 @@ resource "azurerm_public_ip" "terraform-load-balancer-public-ip" {
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
   location            = var.location
   allocation_method   = "Static"
-
+  sku                 = "Standard"
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "tf_assoc" {
@@ -462,6 +473,34 @@ resource "azurerm_lb_rule" "allow_https" {
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tf_backend_pool.id]
 }
 
+resource "azurerm_lb_rule" "allow_redis" {
+  loadbalancer_id                = azurerm_lb.tf_lb.id
+  name                           = "LBRuleRedis"
+  protocol                       = "Tcp"
+  frontend_port                  = 6379
+  backend_port                   = 6379
+  frontend_ip_configuration_name = "PublicIPAddress"
+  enable_floating_ip             = true
+  idle_timeout_in_minutes        = 4
+  load_distribution              = "Default"
+  probe_id                       = azurerm_lb_probe.tf_probe.id
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tf_backend_pool.id]
+}
+
+resource "azurerm_lb_rule" "allow_alt_https" {
+  loadbalancer_id                = azurerm_lb.tf_lb.id
+  name                           = "LBRuleAltHTTPS"
+  protocol                       = "Tcp"
+  frontend_port                  = 8443
+  backend_port                   = 8443
+  frontend_ip_configuration_name = "PublicIPAddress"
+  enable_floating_ip             = true
+  idle_timeout_in_minutes        = 4
+  load_distribution              = "Default"
+  probe_id                       = azurerm_lb_probe.tf_probe.id
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tf_backend_pool.id]
+}
+
 resource "azurerm_lb_backend_address_pool" "tf_backend_pool" {
   loadbalancer_id = azurerm_lb.tf_lb.id
   name            = "BackEndAddressPool"
@@ -480,7 +519,7 @@ resource "azurerm_lb" "tf_lb" {
   name                = "tf_lb"
   location            = var.location
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
-  sku                 = "Basic"
+  sku                 = "Standard"
 
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
@@ -511,6 +550,7 @@ resource "azurerm_lb_rule" "allow_http_mgmt" {
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.tf_backend_pool_mgmt.id]
 }
 
+# LB Rule for management SNIPs HTTPS
 resource "azurerm_lb_rule" "allow_https_mgmt" {
   loadbalancer_id                = azurerm_lb.tf_lb_mgmt.id
   name                           = "LBRulePrivateHTTPS"
@@ -544,7 +584,7 @@ resource "azurerm_lb" "tf_lb_mgmt" {
   name                = "tf_lb_mgmt"
   location            = var.location
   resource_group_name = azurerm_resource_group.terraform-resource-group.name
-  sku                 = "Basic"
+  sku                 = "Standard"
 
   # Private IP from management subnet to route management traffic to HA Primary.
   frontend_ip_configuration {
