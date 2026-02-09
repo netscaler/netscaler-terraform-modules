@@ -15,6 +15,22 @@ resource "citrixadc_nsip" "netscaler2_snip_with_mgmt_access" {
   mgmtaccess = "ENABLED"
 }
 
+# add vip as snip in netcslaer1 
+resource "citrixadc_nsip" "netscaler1_clientipsnip" {
+  ipaddress = data.terraform_remote_state.infra.outputs.private_vips[0]
+  netmask = cidrnetmask(var.client_subnet_address_prefix)
+  type      = "SNIP"
+  mgmtaccess = "ENABLED"
+}
+
+# add vip as snip in netcslaer2
+resource "citrixadc_nsip" "netscaler1_clientipsnip" {
+  provider  = citrixadc.netscaler2
+  ipaddress = data.terraform_remote_state.infra.outputs.private_vips[1]
+  netmask = cidrnetmask(var.client_subnet_address_prefix)
+  type      = "SNIP"
+  mgmtaccess = "ENABLED"
+}
 
 # add ha node
 resource "citrixadc_hanode" "netscaler1" {
