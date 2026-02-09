@@ -10,7 +10,7 @@ terraform {
 data "terraform_remote_state" "infra" {
   backend = "local"
   config = {
-    path = "../ha_availability_set_single_ip/terraform.tfstate"
+    path = "../provision_two_vpx/terraform.tfstate"
   }
 }
 
