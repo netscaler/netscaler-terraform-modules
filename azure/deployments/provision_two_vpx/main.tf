@@ -103,7 +103,7 @@ resource "azurerm_network_security_rule" "terraform-allow-client-http-from-inter
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_ranges     = ["80", "443"]
+  destination_port_ranges     = ["80", "443", "6379", "8443"]
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.terraform-resource-group.name
