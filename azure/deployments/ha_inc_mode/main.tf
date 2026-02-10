@@ -24,7 +24,7 @@ resource "citrixadc_nsip" "netscaler1_clientipsnip" {
 }
 
 # add vip as snip in netcslaer2
-resource "citrixadc_nsip" "netscaler1_clientipsnip" {
+resource "citrixadc_nsip" "netscaler2_clientipsnip" {
   provider  = citrixadc.netscaler2
   ipaddress = data.terraform_remote_state.infra.outputs.private_vips[1]
   netmask = cidrnetmask(var.client_subnet_address_prefix)

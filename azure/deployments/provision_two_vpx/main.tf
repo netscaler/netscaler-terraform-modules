@@ -289,20 +289,14 @@ resource "azurerm_virtual_machine" "terraform-primary-adc-machine" {
     computer_name  = "Citrix-ADC-VPX-node-0"
     admin_username = var.adc_admin_username
     admin_password = var.adc_admin_password
-  #   custom_data = base64encode(<<-EOF
-  #   <NS-PRE-BOOT-CONFIG>
-  #     <NS-CONFIG>
-  #       set systemparameter -promptString "%u@%s"
-  #       add ns ip ${azurerm_network_interface.terraform-adc-client-interface[0].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
-  #       add ns ip ${azurerm_network_interface.terraform-adc-server-interface[0].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
-  #       add ns ip ${azurerm_network_interface.terraform-adc-management-interface[0].ip_configuration[1].private_ip_address} ${cidrnetmask(var.management_subnet_address_prefix)} -type SNIP -mgmtAccess ENABLED
-  #       add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -inc ENABLED
-  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-  #     </NS-CONFIG>
-  #   </NS-PRE-BOOT-CONFIG>
-  # EOF
-  # )
+    custom_data = base64encode(<<-EOF
+    <NS-PRE-BOOT-CONFIG>
+      <NS-CONFIG>
+        add ns ip ${azurerm_network_interface.terraform-adc-client-interface[0].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
+      </NS-CONFIG>
+    </NS-PRE-BOOT-CONFIG>
+  EOF
+  )
   }
 
   availability_set_id = azurerm_availability_set.terraform-availability-set.id
@@ -368,20 +362,14 @@ resource "azurerm_virtual_machine" "terraform-secondary-adc-machine" {
     computer_name  = "Citrix-ADC-VPX-node-1"
     admin_username = var.adc_admin_username
     admin_password = var.adc_admin_password
-  #   custom_data = base64encode(<<-EOF
-  #   <NS-PRE-BOOT-CONFIG>
-  #     <NS-CONFIG>
-  #       set systemparameter -promptString "%u@%s"
-  #       add ns ip ${azurerm_network_interface.terraform-adc-client-interface[1].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
-  #       add ns ip ${azurerm_network_interface.terraform-adc-server-interface[1].private_ip_address} ${cidrnetmask(var.server_subnet_address_prefix)} -type SNIP
-  #       add ns ip ${azurerm_network_interface.terraform-adc-management-interface[1].ip_configuration[1].private_ip_address} ${cidrnetmask(var.management_subnet_address_prefix)} -type SNIP -mgmtAccess ENABLED
-  #       add ha node 1 ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -inc ENABLED
-  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[0].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-  #       set ns rpcNode ${azurerm_network_interface.terraform-adc-management-interface[1].private_ip_address} -password ${var.citrixadc_rpc_node_password} -secure YES
-  #     </NS-CONFIG>
-  #   </NS-PRE-BOOT-CONFIG>
-  # EOF
-  # )
+    custom_data = base64encode(<<-EOF
+    <NS-PRE-BOOT-CONFIG>
+      <NS-CONFIG>
+        add ns ip ${azurerm_network_interface.terraform-adc-client-interface[1].private_ip_address} ${cidrnetmask(var.client_subnet_address_prefix)} -type SNIP
+      </NS-CONFIG>
+    </NS-PRE-BOOT-CONFIG>
+  EOF
+  )
   }
 
   availability_set_id = azurerm_availability_set.terraform-availability-set.id
