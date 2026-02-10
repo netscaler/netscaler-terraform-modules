@@ -31,7 +31,7 @@ This folder contains the configuration scripts to deploy
 
 # Network Architecture diagram of a high availability deployment, using Azure Availability Set
 
-![netArchDiag_HA_Avil_Set](../../../assets/azure_deployment_assets/netArchDiag_HA_Avil_Set.png "netArchDiag_HA_Avil_Set")
+![provision2vpx](../../../assets/azure_deployment_assets/provision2vpx.png "provision2vpx")
 
 # Resource group
 
@@ -97,20 +97,6 @@ In such case the management interface will only be accessible from within the
 Virtual Network.
 This means that all ssh connections and NITRO API calls will have to go through
 the bastion host.
-
-The client network interface is where the VIP address is assigned.
-This private VIP address is not used for incoming traffic since we are in an HA setup.
-
-Instead the ip address that will be used for traffic is the public ip address of the
-Azure Load Balancer. This address must be assigned to a Vserver (LB/CS) with
-functioning backend services. From that point on the ALB public ip address will
-start load balancing the instances.
-You can find a sample LB configuration in this [folder](../simple_lb_ha)
-
-In the case of a fail over the ALB will detect through the probe one node going down
-and the secondary taking over at which point it will starting sending traffic to the
-new primary node. Traffic may be impacted for a few seconds until the ALB probe
-can determine the functional state of the HA pair.
 
 There are no additional security rules attached to the interface.
 This means access is only restricted by the subnet attached security group,
