@@ -91,4 +91,5 @@ variable "reset_password" {
 
 variable "new_password" {
   description = "The new ADC password that will replace the default one on both ADC instances. Applicable only when reset_password variable is set to `true`"
+  sensitive   = true
 }

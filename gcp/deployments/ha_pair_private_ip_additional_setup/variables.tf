@@ -35,6 +35,7 @@ variable "secondary_snip_netmask" {
 
 variable "password" {
   description = "Password for the HA pair"
+  sensitive   = true
 }
 
 variable "backend_service_address" {

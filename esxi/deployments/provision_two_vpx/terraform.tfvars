@@ -14,7 +14,7 @@ subnetmask = "255.255.255.0"
 # vSphere/ESXi configuration
 vsphere_ip = "10.106.195.4"
 vsphere_username = "root"
-vsphere_password = "Freebsd123$%^"
+vsphere_password = "<<enter password>>"
 
 # ESXi resource details
 # For standalone ESXi, these are typically the default values

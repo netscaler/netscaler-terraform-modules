@@ -4,6 +4,7 @@ variable "adc_login_secret_name" {
 
 variable "new_password" {
     description = "Provide the New Password for Citrix ADC"
+    sensitive   = true
 }
 
 variable "cic_config_snip" {

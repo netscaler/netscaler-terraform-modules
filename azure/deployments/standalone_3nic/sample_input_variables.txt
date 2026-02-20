@@ -8,5 +8,5 @@ management_subnet_address_prefix = "10.22.1.0/24"
 client_subnet_address_prefix = "10.22.2.0/24"
 server_subnet_address_prefix = "10.22.3.0/24"
 
-adc_admin_password = "VerySecret1234"
+adc_admin_password = "<<enter password>>"
 controlling_subnet = "1.2.3.4/32"
