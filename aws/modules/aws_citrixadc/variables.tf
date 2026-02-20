@@ -35,6 +35,7 @@ variable "aws_access_key" {
 
 variable "aws_secret_key" {
   type        = string
+  sensitive   = true
   description = "The AWS secret key. This can also be given as the environment variable `TF_VAR_aws_secret_key`."
 }
 

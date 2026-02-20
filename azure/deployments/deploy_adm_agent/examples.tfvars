@@ -16,7 +16,7 @@ adm_agent_version_offer = "netscaler-ma-service-agent"
 
 # Don't use `nsroot` or `admin` as the username
 adm_agent_admin_username = "agent"
-adm_agent_admin_password = "Verysecret@123"
+adm_agent_admin_password = "<<enter password>>"
 
 admin_ip_address = "10.10.10.10" #  This ip address will have SSH permission to Manage ADM Agent
 
