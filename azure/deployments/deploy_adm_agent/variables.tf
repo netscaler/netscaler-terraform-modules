@@ -41,6 +41,7 @@ variable "adm_agent_admin_username" {
   default     = "agent"
 }
 variable "adm_agent_admin_password" {
+  sensitive   = true
   description = "Password for the Citrix ADC admin user. Must be sufficiently complex to pass azurerm provider checks."
 }
 variable "admin_ip_address" {

@@ -29,9 +29,11 @@ variable "adc_admin_username" {
 }
 
 variable "adc_admin_password" {
+  sensitive   = true
   description = "Password for the Citrix ADC admin user. Must be sufficiently complex to pass azurerm provider checks."
 }
 variable "citrixadc_rpc_node_password" {
+  sensitive   = true
   description = "The new ADC RPC node password that will replace the default one on both ADC instances. [Learn More about RPCNode](https://docs.citrix.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc/change-rpc-node-password.html)"
 }
 

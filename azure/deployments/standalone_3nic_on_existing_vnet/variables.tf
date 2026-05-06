@@ -41,5 +41,6 @@ variable "adc_admin_username" {
   default     = "nsroot"
 }
 variable "adc_admin_password" {
+  sensitive   = true
   description = "Password for the Citrix ADC admin user. Must be sufficiently complex to pass azurerm provider checks."
 }

@@ -40,6 +40,7 @@ variable "aws_access_key" {
 
 variable "aws_secret_key" {
   description = "The AWS secret key"
+  sensitive   = true
 }
 
 # Citrix ADC Provider Configuration

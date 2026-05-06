@@ -7,4 +7,4 @@ server_subnet_name = "terraform-server-subnet"
 location = "Central India"
 controlling_subnet = "1.2.3.4/32"
 
-adc_admin_password = "VerySecret1234"
+adc_admin_password = "<<enter password>>"

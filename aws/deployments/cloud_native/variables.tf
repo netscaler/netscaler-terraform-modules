@@ -34,10 +34,12 @@ variable "aws_region" {
 
 variable "aws_access_key" {
   description = "The AWS access key"
+  sensitive   = true
 }
 
 variable "aws_secret_key" {
   description = "The AWS secret key"
+  sensitive   = true
 }
 
 variable "naming_prefix" {
