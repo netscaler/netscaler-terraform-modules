@@ -1,0 +1,9 @@
+title = "Gitleaks Configuration"
+
+[allowlist]
+  description = "Allow example/placeholder credentials in documentation files"
+  paths = [
+    '''examples\.tfvars$''',
+    '''example\.tfvars$''',
+    '''assets/''',
+  ]

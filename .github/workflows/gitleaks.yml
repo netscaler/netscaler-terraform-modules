@@ -1,0 +1,60 @@
+---
+name: Gitleaks Secret Scan
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - assets/**
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - assets/**
+permissions: read-all
+jobs:
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Download and install Gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          chmod +x gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Run Gitleaks secret scan
+        id: gitleaks_scan
+        continue-on-error: true
+        run: |
+          gitleaks detect --source . --config .gitleaks.toml --redact \
+            --report-format sarif --report-path gitleaks-report.sarif
+
+      - name: Upload Gitleaks SARIF to GitHub Security tab
+        if: always() && hashFiles('gitleaks-report.sarif') != ''
+        uses: github/codeql-action/upload-sarif@256d634097be96e792d6764f9edaefc4320557b1  # v4
+        with:
+          sarif_file: gitleaks-report.sarif
+
+      - name: Upload scan results as artifact
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
+        with:
+          name: gitleaks-scan-results
+          path: gitleaks-report.sarif
+          retention-days: 30
+
+      - name: Fail on secrets detected
+        if: steps.gitleaks_scan.outcome == 'failure'
+        run: |
+          echo "::error::Gitleaks detected secrets or credentials in the repository."
+          exit 1
