@@ -1,9 +1,11 @@
 title = "Gitleaks Configuration"
 
 [allowlist]
-  description = "Allow example/placeholder credentials in documentation files"
+  description = "Allow placeholder patterns used in example files"
+  regexes = [
+    '''<<[^>]+>>''',
+    '''<[^>]+>''',
+  ]
   paths = [
-    '''examples\.tfvars$''',
-    '''example\.tfvars$''',
     '''assets/''',
   ]
