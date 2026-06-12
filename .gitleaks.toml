@@ -1,0 +1,11 @@
+title = "Gitleaks Configuration"
+
+[allowlist]
+  description = "Allow placeholder patterns used in example files"
+  regexes = [
+    '''<<[^>]+>>''',
+    '''<[^>]+>''',
+  ]
+  paths = [
+    '''assets/''',
+  ]

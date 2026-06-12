@@ -10,6 +10,6 @@ client_subnet_cidr_block     = "10.0.2.0/24"
 server_subnet_cidr_block     = "10.0.3.0/24"
 
 vip_alias_range             = "10.0.2.6"
-citrixadc_rpc_node_password = "Secret@12345"
+citrixadc_rpc_node_password = "<<enter password>>"
 public_ssh_key_file         = "~/.ssh/id_rsa.pub"
 controlling_subnet          = "10.10.10.0/24"
