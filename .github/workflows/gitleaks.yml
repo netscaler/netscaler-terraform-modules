@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - gitleaks  
     paths-ignore:
       - assets/**
 permissions: read-all
