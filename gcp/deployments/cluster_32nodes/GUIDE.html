@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide — NetScaler ADC Cluster on GCP (combined)</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1d21; --muted:#5b6672; --line:#dfe3e8;
+    --accent:#0b5fa5; --accent-soft:#eaf2fa;
+    --warn-bg:#fff6e5; --warn-line:#e0a325;
+    --stop-bg:#fdecea; --stop-line:#c0392b;
+    --ok-bg:#eaf6ec; --ok-line:#2e7d4f;
+    --code-bg:#f5f6f8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 28px 120px}
+  header.page{border-bottom:3px solid var(--accent);padding:46px 0 26px;margin-bottom:10px}
+  header.page h1{margin:0 0 6px;font-size:30px;letter-spacing:-.3px}
+  header.page .sub{color:var(--muted);font-size:15px}
+  nav.docs{margin:18px 0 0;font-size:14px}
+  nav.docs a{display:inline-block;margin-right:14px;padding:5px 11px;border:1px solid var(--line);border-radius:5px;text-decoration:none;color:var(--accent);background:#fff}
+  nav.docs a.here{background:var(--accent);color:#fff;border-color:var(--accent)}
+  h2{margin:46px 0 12px;font-size:22px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  h3{margin:30px 0 8px;font-size:17px}
+  h4{margin:22px 0 6px;font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  p{margin:10px 0}
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:13.5px;background:var(--code-bg);padding:1.5px 5px;border-radius:3px}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:5px;padding:14px 16px;overflow:auto;font-size:13.5px;line-height:1.55}
+  pre code{background:none;padding:0;font-size:13.5px}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:var(--accent-soft);font-weight:600}
+  td code{white-space:nowrap}
+  .box{border-radius:6px;padding:14px 18px;margin:18px 0}
+  .box p:first-child{margin-top:0}.box p:last-child{margin-bottom:0}
+  .box .t{font-weight:700;display:block;margin-bottom:5px}
+  .stop{background:var(--stop-bg);border:1px solid var(--stop-line);border-left:5px solid var(--stop-line)}
+  .warn{background:var(--warn-bg);border:1px solid var(--warn-line);border-left:5px solid var(--warn-line)}
+  .ok{background:var(--ok-bg);border:1px solid var(--ok-line);border-left:5px solid var(--ok-line)}
+  .note{background:var(--accent-soft);border:1px solid #bcd6ec;border-left:5px solid var(--accent)}
+  .hero{background:var(--accent-soft);border:1px solid #bcd6ec;border-radius:8px;padding:20px 24px;margin:24px 0}
+  .hero h3{margin-top:0}
+  ul,ol{margin:10px 0;padding-left:26px}
+  li{margin:5px 0}
+  .muted{color:var(--muted)}
+  .tag{display:inline-block;font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:10px;background:var(--accent);color:#fff;vertical-align:middle;margin-left:7px}
+  .tag.grey{background:var(--muted)}
+  footer{margin-top:70px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px}
+  .toc{columns:2;column-gap:36px;font-size:14.5px;margin:16px 0 0}
+  .toc a{color:var(--accent);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Modifying these Terraform scripts</h1>
+  <div class="sub">NetScaler ADC cluster on GCP — <code>GCP_Cluster/combined/</code> — one <code>terraform apply</code> deploys the instances and forms the cluster.</div>
+  <nav class="docs">
+    <a class="here" href="GUIDE.html">Guide</a>
+    <a href="REPORT.html">Script reference</a>
+    <a href="ISSUES.html">Issues &amp; fixes</a>
+  </nav>
+</header>
+
+<div class="toc">
+  <a href="#rule">The one rule</a><br>
+  <a href="#size">Changing the cluster size</a><br>
+  <a href="#common">Settings you will actually change</a><br>
+  <a href="#run">Running it</a><br>
+  <a href="#verify">Verifying the cluster</a><br>
+  <a href="#limits">Limits before 32 nodes</a><br>
+  <a href="#dont">Things not to change</a><br>
+  <a href="#recipes">Common recipes</a><br>
+  <a href="#trouble">When an apply fails</a><br>
+  <a href="#destroy">Tearing it down</a>
+</div>
+
+<h2 id="rule">The one rule</h2>
+
+<div class="hero">
+  <h3>Edit <code>terraform.tfvars</code>. Nothing else.</h3>
+  <p>Every knob worth turning is a variable, and every variable has a documented default in
+  <code>variables.tf</code>. The thirteen <code>.tf</code> files are the machinery; <code>terraform.tfvars</code>
+  is the control panel. In normal use you should never need to open a <code>.tf</code> file at all — not even
+  to change the number of nodes.</p>
+</div>
+
+<p>If you find yourself wanting to edit a <code>.tf</code> file, that is a signal to check
+<a href="REPORT.html">the script reference</a> first — the setting you want probably already exists as a
+variable.</p>
+
+<h2 id="size">Changing the cluster size</h2>
+
+<p>One line:</p>
+
+<pre><code># terraform.tfvars
+node_count = 5</code></pre>
+
+<p>That single number drives everything:</p>
+
+<table>
+  <tr><th>What it controls</th><th>How</th></tr>
+  <tr><td>GCE instances</td><td><code>count = local.node_count</code> on <code>google_compute_instance.adc</code></td></tr>
+  <tr><td>NSIPs (management)</td><td><code>nsip_host_offset</code> + node id, out of <code>management_subnet_cidr_block</code></td></tr>
+  <tr><td>Client / server addresses</td><td><code>data_host_offset</code> + node id, out of their subnets</td></tr>
+  <tr><td>External addresses</td><td>one per node, per NIC, when the corresponding <code>assign_*_external_ip</code> is true</td></tr>
+  <tr><td>Cluster node blocks</td><td><code>dynamic "clusternode"</code> over <code>local.cluster_nodes</code></td></tr>
+  <tr><td>Cluster priorities</td><td><code>cluster_priority_base</code> + node id</td></tr>
+  <tr><td>Spotted SNIPs</td><td>one <code>citrixadc_nsip</code> per node per subnet, <code>ownernode = node id</code></td></tr>
+  <tr><td>Password resets</td><td>the first <code>node_count</code> slots of the 32-slot pool activate; the rest stay at <code>count = 0</code></td></tr>
+</table>
+
+<p>Valid range is <strong>1 to 32</strong>. 32 is the NetScaler cluster limit, not a limit of these scripts.
+<code>node_count = 1</code> is legal and gives a single-node cluster with a CLIP — useful for testing the
+plumbing cheaply.</p>
+
+<div class="note box">
+  <span class="t">Why <code>providers.tf</code> and <code>password_reset.tf</code> have 32 near-identical blocks</span>
+  <p><code>citrixadc_password_resetter</code> has no <code>endpoint</code> attribute — its whole schema is
+  username / password / new_password — so the only way to aim one at a specific node is a provider alias.
+  Terraform cannot generate provider aliases: <code>provider =</code> cannot be interpolated, and a provider
+  block accepts neither <code>count</code> nor <code>for_each</code>. So the pool is written out to the
+  appliance's own maximum, once, and sized so it never has to be extended. Unused slots have a loopback
+  endpoint, <code>do_login = false</code>, and <code>count = 0</code> — they cost nothing and dial nothing.</p>
+  <p class="muted">You do not read or edit those two files. They are generated machinery.</p>
+</div>
+
+<h4>Resizing a cluster that already exists</h4>
+
+<p>Changing <code>node_count</code> on a live deployment adds or removes nodes in place. Growing is
+cheap. Shrinking removes the node from the CLIP first, then destroys the VM; node 0 (the CCO) goes last.</p>
+
+<div class="warn box">
+  <span class="t">Grow one node at a time the first time</span>
+  <p>Only the 3-node create path has actually been applied end to end. The in-place resize path goes through
+  <code>citrixadc_cluster</code>'s Update, which is far less exercised than its Create. Go 3 → 4, confirm with
+  <code>show cluster node</code>, then go further.</p>
+</div>
+
+<h2 id="common">Settings you will actually change</h2>
+
+<h3>Placement and identity</h3>
+<table>
+  <tr><th>Variable</th><th>Current</th><th>Notes</th></tr>
+  <tr><td><code>project</code></td><td><code>cluster-gcp</code></td><td>Real project id. A placeholder here once produced a <code>SERVICE_DISABLED</code> error against a project literally named <em>my-gcp-project</em>.</td></tr>
+  <tr><td><code>region</code> / <code>zone</code></td><td><code>us-east1</code> / <code>us-east1-b</code></td><td>All nodes share one zone so they share a subnet.</td></tr>
+  <tr><td><code>prefix</code></td><td><code>adc-cluster</code></td><td>Prefixes every created resource name. <strong>Change this to run a second deployment in the same project</strong> — otherwise the names collide.</td></tr>
+  <tr><td><code>machine_type</code></td><td><code>n2d-standard-8</code></td><td>Per node. Must allow 3 NICs — GCP permits at most one NIC per vCPU.</td></tr>
+  <tr><td><code>image</code></td><td><code>tej-freebsd-114</code></td><td>Must be a NetScaler ADC image. Validate a new image on one throwaway VM before spending a full apply on it.</td></tr>
+  <tr><td><code>public_ssh_key_file</code></td><td><code>~/.ssh/id_rsa.pub</code></td><td>Resolved on the Terraform host, not your workstation. <code>~</code> is expanded.</td></tr>
+</table>
+
+<h3>Networking</h3>
+<table>
+  <tr><th>Variable</th><th>Current</th><th>Notes</th></tr>
+  <tr><td><code>use_existing_networks</code></td><td><code>false</code></td><td><code>false</code> creates three VPCs (3 against the 50-per-project quota). <code>true</code> looks up three that exist and makes the six <code>existing_*</code> name variables required.</td></tr>
+  <tr><td><code>management_subnet_cidr_block</code></td><td><code>172.20.1.0/24</code></td><td>NSIPs and the CLIP come out of this. Also the backplane subnet.</td></tr>
+  <tr><td><code>client_subnet_cidr_block</code></td><td><code>172.20.2.0/24</code></td><td>VIP side.</td></tr>
+  <tr><td><code>server_subnet_cidr_block</code></td><td><code>172.20.3.0/24</code></td><td>Back-end side.</td></tr>
+  <tr><td><code>peer_network</code></td><td><code>jaz-n1-mgmt</code></td><td><strong>The one that matters.</strong> A fresh VPC is isolated — without peering, Terraform has no route to the NSIPs and the apply builds everything then dies at the password reset. Set it to the network the Terraform host is on.</td></tr>
+  <tr><td><code>controlling_subnet</code></td><td><code>10.0.1.0/24</code></td><td>Subnet the Terraform host sits in. The management firewall opens NITRO and SSH to this range only.</td></tr>
+  <tr><td><code>create_firewall_rules</code></td><td><code>true</code></td><td>Required for new networks — they permit no ingress until the rules exist.</td></tr>
+  <tr><td><code>assign_management_external_ip</code></td><td><code>false</code></td><td>Keep it false. A public NSIP exposes NITRO and SSH to the internet behind nothing but the ADC password.</td></tr>
+  <tr><td><code>assign_client_external_ip</code></td><td><code>true</code></td><td>One per node. A cluster VIP is striped, so there is no single external address — front it with a GCP load balancer if you need one entry point.</td></tr>
+</table>
+
+<p>Find the peer network name with:</p>
+<pre><code>gcloud compute instances describe &lt;terraform-host&gt; --zone=us-east1-b \
+  --format="value(networkInterfaces[].network.basename())"</code></pre>
+
+<h3>Cluster</h3>
+<table>
+  <tr><th>Variable</th><th>Current</th><th>Notes</th></tr>
+  <tr><td><code>cluster_id</code></td><td><code>1</code></td><td>—</td></tr>
+  <tr><td><code>cluster_priority_base</code></td><td><code>1</code></td><td>Node 0 gets this, node <em>n</em> gets base + <em>n</em>; lowest wins the CCO election. <code>base + node_count - 1</code> must be ≤ 31.</td></tr>
+  <tr><td><code>cluster_tunnel_mode</code></td><td><code>UDP</code></td><td>GCP's fabric drops frames with foreign MACs, so <code>NONE</code> (plain L2 steering) cannot work in cloud. <code>GRE</code> is the other cloud-appropriate option; the firewall already permits IP protocol 47 for it.</td></tr>
+  <tr><td><code>backplane_interface</code></td><td><code>0/1</code></td><td><strong>Leave it.</strong> See the box below.</td></tr>
+  <tr><td><code>hello_interval</code></td><td><code>200</code> ms</td><td>—</td></tr>
+  <tr><td><code>adc_boot_wait</code></td><td><code>600s</code></td><td>A VPX regularly needs 6–10 minutes before NITRO answers. 300s was too short. Bypassed when <code>adaptive_boot_wait</code> is on — see <a href="#observe">Boot wait and progress output</a>.</td></tr>
+</table>
+
+<div class="stop box">
+  <span class="t">The backplane goes on 0/1. This is the opposite of on-prem practice.</span>
+  <p>A VPX on GCP auto-configures only its NSIP, from nic0. Interfaces <code>1/1</code> and <code>1/2</code>
+  come up with <em>no IP at all</em>. A backplane with no address cannot carry a heartbeat, so a node given
+  <code>1/2</code> joins, sits at <code>(Adding)</code>, and the apply fails 30 minutes later with a bare
+  <em>"timeout waiting for cluster operation to complete"</em>.</p>
+  <p>Fixing it after the fact is impossible from Terraform: <code>citrixadc_cluster</code> does not return
+  until every node reports ACTIVE, so the SNIP that would give the node an address sits unapplied behind the
+  very resource waiting for it. This cost two full apply cycles — see
+  <a href="ISSUES.html#backplane">Issues &amp; fixes</a>.</p>
+</div>
+
+<h3>Data plane and credentials</h3>
+<table>
+  <tr><th>Variable</th><th>Current</th><th>Notes</th></tr>
+  <tr><td><code>configure_server_snips</code></td><td><code>true</code></td><td>nic2 address → spotted SNIP on the CLIP, so nodes can reach back-end servers.</td></tr>
+  <tr><td><code>configure_client_snips</code></td><td><code>true</code></td><td>nic1 address → spotted SNIP, so nodes can originate and answer client traffic.</td></tr>
+  <tr><td><code>save_cluster_config</code></td><td><code>true</code></td><td>Writes <code>ns.conf</code> on every node. Without it, a node that reboots comes back without its cluster config and drops out.</td></tr>
+  <tr><td><code>adc_admin_username</code></td><td><code>nsroot</code></td><td>—</td></tr>
+  <tr><td><code>adc_admin_password</code></td><td><strong>not in tfvars</strong> — Terraform asks</td><td>No default, so you are prompted. One answer covers every node. Must not be empty and must not have stray whitespace — a validation rejects each. See the security box.</td></tr>
+  <tr><td><code>enable_password_reset</code></td><td><code>true</code></td><td>Turn off only if the nodes already carry <code>adc_admin_password</code>. GCP ADC images boot with the password set to the GCP instance id and refuse all other NITRO calls until it is changed.</td></tr>
+</table>
+
+<div class="warn box">
+  <span class="t">Secrets</span>
+  <p><code>adc_admin_password</code> is <strong>not</strong> written in <code>terraform.tfvars</code>. The
+  variable has no default, so Terraform asks for it, and that single answer is used for every node — all 32
+  provider aliases, all 32 resetters, the cluster resource and the watcher read the same variable. There is no
+  per-node password to keep in sync.</p>
+  <p>To be asked <em>once per deployment</em> rather than once per command, save the plan:
+  <code>terraform plan -out=tfplan</code> then <code>terraform apply tfplan</code>. Delete
+  <code>tfplan</code> afterwards — it embeds the password. For unattended runs,
+  <code>export TF_VAR_adc_admin_password='...'</code> and nothing prompts at all.</p>
+  <p>What prompting does <em>not</em> do: Terraform does not mask interactive variable input, even for a
+  <code>sensitive</code> variable, so it is echoed as you type. And the value still lands in
+  <code>terraform.tfstate</code> in plaintext — <code>sensitive = true</code> only masks CLI output. What it
+  <em>does</em> do is keep the password out of the file most likely to be committed by accident.</p>
+  <p>Keep <code>terraform.tfvars</code>, <code>*.auto.tfvars</code>, <code>.terraform/</code>, any saved
+  <code>tfplan</code> and <code>terraform.tfstate*</code> out of git and out of any folder that syncs off this
+  machine. Never commit service-account JSON keys.</p>
+</div>
+
+<div class="stop box">
+  <span class="t">Do not press Enter at the password prompt, and watch for stray spaces</span>
+  <p>Both are specific to typing at a prompt, and both used to fail late and misleadingly, so both are now
+  rejected at plan time by validations in <code>variables.tf</code>:</p>
+  <ul>
+    <li><strong>Empty.</strong> NITRO answers <em>"Password is not specified"</em> with a non-200, the
+    cluster bootstrap reads every non-200 as "not up yet", and the run dies half an hour later on a timeout
+    that never mentions credentials — see <a href="ISSUES.html#password">issue 8</a>.</li>
+    <li><strong>Leading or trailing whitespace.</strong> Invisible when you re-type it to compare. The reset
+    would set the padded value and later calls would appear to work, until one sends the trimmed one.</li>
+  </ul>
+  <p>Note that <code>terraform destroy</code> prompts as well, and teardown removes nodes from the CLIP
+  before destroying the VMs — so it needs credentials that actually work. Answering it with a different
+  password than the nodes carry fails the destroy partway through, with the cluster half dismantled.</p>
+</div>
+
+<h3 id="observe">Boot wait and progress output</h3>
+
+<p>Two phases of the apply are long and, by default, completely silent: the boot wait, and the cluster
+formation. These four settings shorten the first and narrate both. All of them need <code>curl</code> on the
+Terraform host; all of them skip themselves with a warning if it is missing. They do, however, all require a
+POSIX shell — see the caveat below.</p>
+
+<table>
+  <tr><th>Variable</th><th>Current</th><th>Notes</th></tr>
+  <tr><td><code>adaptive_boot_wait</code></td><td><code>true</code></td><td>Poll each NSIP until NITRO answers instead of always sleeping the full <code>adc_boot_wait</code>, then wait only <code>adc_boot_settle</code> on top. Typically 3–5 minutes back per apply. <strong>Defaults to <code>false</code></strong> — the fixed wait is known-good.</td></tr>
+  <tr><td><code>adc_boot_settle</code></td><td><code>90s</code></td><td>Covers the gap between "NITRO answers" and "NITRO will accept a password change" — two slightly different moments. If the password reset starts failing with the probe on but passes with it off, <strong>raise this</strong> rather than abandoning the probe.</td></tr>
+  <tr><td><code>adc_boot_probe_timeout</code></td><td><code>900</code> s</td><td>Per node, then the probe gives up and lets the apply continue. Half again <code>adc_boot_wait</code>, so a genuinely slow boot is still picked up rather than cut short.</td></tr>
+  <tr><td><code>progress_logs</code></td><td><code>true</code></td><td>Timestamped milestone line after each of the six phases. Re-runs every apply by design, so expect six trivial changes in every plan; set <code>false</code> to silence.</td></tr>
+  <tr><td><code>cluster_watch_logs</code></td><td><code>true</code></td><td>Reports node state <em>while</em> the cluster forms, rather than after. Also needs a route to the NSIPs.</td></tr>
+  <tr><td><code>cluster_watch_interval</code> / <code>cluster_watch_timeout</code></td><td><code>20</code> s / <code>2400</code> s</td><td>Output is printed on change only, so a short interval costs nothing in noise. The 40-minute cap sits past the cluster resource's own 30-minute budget, so the watcher never goes quiet while the cluster is still running.</td></tr>
+</table>
+
+<div class="ok box">
+  <span class="t">None of this can break an apply</span>
+  <p>The probe, the six markers and the watcher all create no infrastructure, and <em>nothing in the graph
+  depends on any of them</em>. The probe falls through on timeout; every failure path in the watcher exits 0.
+  Turning them all off changes what you see and nothing about what is built.</p>
+  <p><strong>One exception, and it is a hard one:</strong> all three run through
+  <code>interpreter = ["/bin/sh", "-c"]</code>. A missing <code>curl</code> is handled <em>inside</em> the
+  scripts and costs you nothing; a missing <code>/bin/sh</code> is different, because Terraform then cannot
+  launch the provisioner at all, and a provisioner that fails to start fails the apply. Running Terraform
+  from Windows without a POSIX shell? Set all three to <code>false</code> before the first run. Nothing
+  checks this for you at plan time.</p>
+  <p>The one thing not to do is add <code>citrixadc_cluster.this</code> to the watcher's
+  <code>depends_on</code>. It deliberately shares the <em>cluster's</em> dependencies instead, so Terraform
+  schedules the two together; depending on the cluster would serialise the watcher after the thing it exists
+  to watch, and it would print nothing until the cluster had already finished.</p>
+</div>
+
+<h2 id="run">Running it</h2>
+
+<pre><code>cd GCP_Cluster/combined
+
+terraform init
+terraform plan -out=tfplan   # asks for the ADC password; preconditions fire here, not mid-apply
+terraform apply tfplan       # reuses the answer — no second prompt
+rm -f tfplan                 # the plan file embeds the password</code></pre>
+
+<p>Plain <code>terraform plan</code> / <code>terraform apply</code> works too, but prompts for the password
+<em>each</em> time and you must type it identically. Saving the plan is also the only way to be certain the
+thing you reviewed is the thing you applied.</p>
+
+<p>Expect <strong>roughly 25–45 minutes</strong>. Most of it is waiting on hardware that does not report its
+own readiness:</p>
+
+<ul>
+  <li><code>adc_boot_wait</code> — 10 minutes of dead time after the instances exist, before the first NITRO
+  call. With <code>adaptive_boot_wait = true</code> this becomes "however long the boot actually took, plus
+  <code>adc_boot_settle</code>".</li>
+  <li>Bootstrapping node 0 reboots it; the provider polls until it returns.</li>
+  <li><em>Each</em> node join reboots that node; same again. Node adds are sequential.</li>
+</ul>
+
+<p>With the defaults, the run narrates itself. <code>==</code> lines are phase markers; <code>~~</code> lines
+are the cluster watcher reporting live node state during the one resource that would otherwise print
+<code>Still creating...</code> for a quarter of an hour:</p>
+
+<pre><code>==  [09:05:10Z]  2/6  BOOT WAIT COMPLETE  --  NSIPs 172.20.1.11, 172.20.1.12, 172.20.1.13
+      next: resetting nsroot from the GCP instance id on each node
+
+==  [09:07:02Z]  3/6  PASSWORDS RESET  --  3 node(s)
+      next: forming the cluster. This is the long one -- node 0 bootstraps as
+      CCO, then each node joins and REBOOTS. Expect 10-15 min of silence.
+
+  ~~  cluster watch: polling 172.20.1.11 every 20 s, expecting 3 node(s) ACTIVE/UP
+  ~~  [09:07:25Z +23s]   no answer yet from 172.20.1.11 -- node 0 is still bootstrapping or rebooting
+  ~~  [09:11:48Z +286s]  node0=ACTIVE/UP
+  ~~  [09:16:30Z +568s]  node0=ACTIVE/UP  node1=(Adding)/NOT_UP
+  ~~  [09:19:02Z +720s]  node0=ACTIVE/UP  node1=ACTIVE/UP  node2=ACTIVE/UP
+  ~~  [09:19:02Z +720s]  all 3 node(s) ACTIVE/UP -- cluster formed
+
+==  [09:19:40Z]  4/6  CLUSTER FORMED  --  all 3 node(s) ACTIVE on CLIP 172.20.1.10</code></pre>
+
+<p>A node that sits at <code>(Adding)</code> for several consecutive watcher lines is the
+<a href="#dont">backplane failure</a> happening in front of you — you now see it within a minute or two
+instead of at the 30-minute timeout.</p>
+
+<p>Plan-time preconditions catch the things that would otherwise fail 30 minutes in: CIDRs that do not match
+reality, an NSIP list the wrong length, a priority range that overflows 31, a CLIP that collides with an NSIP,
+an invalid backplane interface. Two <code>check</code> blocks warn (without failing) about a new VPC with no
+peering, and about new networks with no firewall rules.</p>
+
+<h2 id="verify">Verifying the cluster</h2>
+
+<pre><code>terraform output cluster_topology   # what Terraform believes it built
+terraform output clip
+terraform output verify_cluster
+terraform output instance_settings  # confirms IP forwarding + cloud-platform scope</code></pre>
+
+<p>Then, from a host on the management network:</p>
+
+<pre><code>ssh nsroot@&lt;clip&gt;
+  show cluster instance 1
+  show cluster node
+  show ns ip</code></pre>
+
+<div class="ok box">
+  <span class="t">A healthy cluster</span>
+  <ul>
+    <li><code>node_count</code> member nodes, exactly one <code>ACTIVE(Configuration Coordinator)</code></li>
+    <li>Every node <strong>Health: UP</strong>, <strong>Operational State: ACTIVE</strong></li>
+    <li><strong>No</strong> <em>"Heartbeats are not seen on backplane"</em></li>
+    <li><strong>No</strong> <em>"There are no spotted SNIPs configured on the cluster"</em></li>
+    <li>Sync State not stuck at <em>IN PROGRESS</em></li>
+  </ul>
+</div>
+
+<p>A node reading <code>(Adding)</code>, <code>UNKNOWN</code> or <code>INACTIVE</code> has not really joined.
+Operational state is gated on health, and health is gated on config sync, which runs over the backplane — so
+<code>INACTIVE</code> plus a stuck full sync is almost always a backplane symptom.</p>
+
+<h2 id="limits">Limits you hit before 32 nodes</h2>
+
+<table>
+  <tr><th>Limit</th><th>Why</th><th>Caught by</th></tr>
+  <tr><td><strong>GCP vCPU quota</strong></td><td><code>machine_type</code> is per node. 8 × <code>n2d-standard-8</code> = 64 vCPUs in one region.</td><td class="muted">Not caught — GCP rejects mid-apply. Check quota first.</td></tr>
+  <tr><td><strong>Priority range</strong></td><td>The ADC accepts 0–31. <code>cluster_priority_base + node_count - 1</code> must fit.</td><td>Precondition in <code>adc_instances.tf</code></td></tr>
+  <tr><td><strong>Management subnet size</strong></td><td>Needs the CLIP plus one NSIP per node, all free.</td><td>Precondition (CLIP/NSIP collision)</td></tr>
+  <tr><td><strong>VPC quota</strong></td><td>3 networks per deployment against 50 per project. Independent of node count.</td><td class="muted">Not caught — <code>gcloud compute networks list | wc -l</code></td></tr>
+</table>
+
+<h2 id="dont">Things not to change</h2>
+
+<table>
+  <tr><th>Thing</th><th>Why it is fixed</th></tr>
+  <tr><td>NIC declaration order in <code>adc_instances.tf</code></td><td>GCP attaches NICs in declaration order and the VPX maps them positionally: nic0 → <code>0/1</code> management, nic1 → <code>1/1</code> client, nic2 → <code>1/2</code> server. There is no way to tell a VPX on GCP to use a different NIC for management.</td></tr>
+  <tr><td><code>can_ip_forward = true</code></td><td>GCP drops any packet whose source or destination is not the NIC's own address. That would break the CLIP, the striped VIPs, and every steering tunnel. Create-time only; changing it replaces the instance.</td></tr>
+  <tr><td><code>scopes = ["cloud-platform"]</code></td><td>The default GCE scope set has no compute access and fails with <code>ACCESS_TOKEN_SCOPE_INSUFFICIENT</code>, which reads like an IAM problem and is not one. Only the service-account <em>identity</em> is configurable.</td></tr>
+  <tr><td>The 32-block pools in <code>providers.tf</code> / <code>password_reset.tf</code></td><td>Generated, index-aligned machinery. Alias <em>N</em> ↔ <code>provider_endpoints[N]</code> ↔ <code>adc[N]</code> ↔ <code>node_count &gt; N</code>.</td></tr>
+  <tr><td>The <code>clusternode</code> <code>addsnip</code> option</td><td>Broken in the provider through at least 3.0.2 — it reads <code>ownernode</code> from an attribute absent from the resource schema, so the SNIP is always submitted unspotted and the ADC rejects it with errorcode 476. <code>snips.tf</code> works around it. Do not re-enable it.</td></tr>
+  <tr><td>The <code>depends_on</code> list in <code>cluster_watch.tf</code></td><td>It mirrors <code>citrixadc_cluster.this</code>'s own dependencies exactly, which is what makes Terraform run the watcher <em>alongside</em> the cluster. Adding <code>citrixadc_cluster.this</code> to it would serialise the watcher after the thing it reports on, and it would print nothing useful. Likewise, nothing may be made to depend on the markers in <code>progress.tf</code> — their inertness is the reason they are safe to ship enabled.</td></tr>
+</table>
+
+<h2 id="recipes">Common recipes</h2>
+
+<h3>Deploy into VPCs that already exist</h3>
+<pre><code>use_existing_networks       = true
+existing_management_network = "..."
+existing_management_subnet  = "..."
+existing_client_network     = "..."
+existing_client_subnet      = "..."
+existing_server_network     = "..."
+existing_server_subnet      = "..."
+
+# These must MATCH the real subnets — a precondition enforces it.
+management_subnet_cidr_block = "..."
+client_subnet_cidr_block     = "..."
+server_subnet_cidr_block     = "..."
+
+# Peering is skipped automatically: if the networks already existed,
+# whoever owns them owns their routing.
+create_firewall_rules = true   # false only if they already permit what the cluster needs</code></pre>
+
+<h3>Pin the addresses instead of deriving them</h3>
+<pre><code>nsips = ["172.20.1.21", "172.20.1.22", "172.20.1.23"]   # exactly node_count entries
+clip  = "172.20.1.20"</code></pre>
+
+<h3>Run a second deployment in the same project</h3>
+<pre><code>prefix                       = "adc-cluster-b"   # every resource name derives from this
+management_subnet_cidr_block = "172.21.1.0/24"   # must not overlap the first one
+client_subnet_cidr_block     = "172.21.2.0/24"
+server_subnet_cidr_block     = "172.21.3.0/24"</code></pre>
+
+<h3>Switch the steering mode to GRE</h3>
+<pre><code>cluster_tunnel_mode = "GRE"   # firewall already permits IP protocol 47</code></pre>
+
+<h3>Skip the password reset (nodes already hold the password)</h3>
+<pre><code>enable_password_reset = false</code></pre>
+
+<h2 id="trouble">When an apply fails</h2>
+
+<table>
+  <tr><th>Symptom</th><th>Almost always</th></tr>
+  <tr><td><code>timeout waiting for cluster operation to complete</code> at ~37 minutes</td><td>A node never went ACTIVE. Backplane with no address, a firewall dropping heartbeats, or a wrong password. The message names none of these — but with <code>cluster_watch_logs</code> on, the <code>~~</code> lines will have shown which node was stuck, and at what state, within the first couple of minutes.</td></tr>
+  <tr><td>Password reset fails on an i/o timeout</td><td>No route from the Terraform host to the NSIPs — <code>peer_network</code> unset, or the peering only exists in one direction.</td></tr>
+  <tr><td><code>Error 409: ... alreadyExists</code> on everything</td><td><code>terraform.tfstate</code> was lost or overwritten. The resources exist in GCP; Terraform no longer knows about them.</td></tr>
+  <tr><td><code>errorcode 476, "Owner node is not specified"</code></td><td>An unspotted SNIP reached a cluster. Should not happen now — <code>addsnip</code> is deliberately unset and <code>snips.tf</code> always sets <code>ownernode</code>.</td></tr>
+  <tr><td>Apply dies at the very first resource</td><td>VPC quota. <code>gcloud compute networks list | wc -l</code></td></tr>
+  <tr><td>Instances never open port 22/80/443</td><td>The image. Validate it standalone before spending a full apply.</td></tr>
+  <tr><td>Password reset fails only after turning <code>adaptive_boot_wait</code> on</td><td>The probe returned at "NITRO answers", which is marginally earlier than "NITRO will accept a password change". Raise <code>adc_boot_settle</code> from <code>90s</code>; that gap is exactly what it exists to cover.</td></tr>
+  <tr><td><code>no curl on this host</code> / <code>cluster watch: no curl…</code></td><td>Cosmetic. The probe falls back to the full <code>adc_boot_wait</code> and the watcher skips itself; the apply is unaffected.</td></tr>
+  <tr><td>Watcher repeats <code>no answer yet from …</code> for the whole run</td><td>No route from the Terraform host to the NSIPs. The password reset is about to fail for the same reason — the watcher just said so first.</td></tr>
+  <tr><td>Second <code>apply</code> authenticates fine, a later one does not</td><td>A different password was typed at the prompt. The nodes still hold the first one. Use <code>terraform plan -out=tfplan</code> or <code>TF_VAR_adc_admin_password</code> so one value is reused.</td></tr>
+  <tr><td><code>destroy</code> fails partway, cluster half dismantled</td><td>Same cause. Teardown needs working credentials to remove nodes from the CLIP. Re-run <code>destroy</code> with the password the nodes actually carry.</td></tr>
+</table>
+
+<p>Full chronology, including the diagnosis for each, is in <a href="ISSUES.html">Issues &amp; fixes</a>.</p>
+
+<h2 id="destroy">Tearing it down</h2>
+
+<pre><code>terraform destroy</code></pre>
+
+<div class="warn box">
+  <span class="t">Known teardown blockers</span>
+  <p>VPC peerings, regional external addresses and lingering <code>default-route-*</code> routes have each
+  held up a destroy. If it stalls, delete the blocker by hand and re-run — do not delete colleagues' networks
+  in the shared lab project.</p>
+  <p><code>terraform.tfstate</code> lives next to these files and is the <em>only</em> record of what exists.
+  Copy it out before syncing anything into this directory. Overwriting it strands every resource in GCP and
+  the next apply fails with <code>409 alreadyExists</code> on all of them.</p>
+</div>
+
+<footer>
+  Companion documents: <a href="REPORT.html">Script reference</a> — what each of the thirteen <code>.tf</code>
+  files does, line by line. <a href="ISSUES.html">Issues &amp; fixes</a> — every problem hit during this build
+  and how it was resolved.
+</footer>
+
+</div>
+</body>
+</html>
