@@ -1,0 +1,185 @@
+# Copy to terraform.tfvars and adjust. Do not commit the real file.
+#
+# Configured to CREATE three new VPC networks, with addressing in 172.20.x so
+# nothing can collide with the crowded 10.0.x space this project uses.
+#
+# ---------------------------------------------------------------------------
+# BEFORE YOU APPLY -- two things that have already bitten this deployment:
+#
+# 1. NETWORK QUOTA. This creates 3 VPCs. The project was at 50/50 networks,
+#    which is the per-project limit, and the last attempt failed on it. Check:
+#        gcloud compute networks list | wc -l
+#    If it is at the cap, either delete unused networks (yours only) or raise
+#    the quota, otherwise this apply dies at the very first resource.
+#
+# 2. THE IMAGE. Three instances from tej-zion-75-6 stalled mid-boot and never
+#    opened port 22, 80 or 443. Validate the image standalone first -- one
+#    throwaway VM, wait 10 minutes, check port 22 -- before spending a full
+#    apply on it:
+#        gcloud compute instances create imgtest --zone=us-east1-b \
+#          --machine-type=n2d-standard-4 --image=<IMAGE> --no-address
+#        timeout 3 bash -c "</dev/tcp/<ITS-IP>/22" && echo UP || echo DEAD
+# ---------------------------------------------------------------------------
+
+# ---------- GCP ----------
+# Leave nothing templated here. A literal placeholder in this field once got
+# as far as a SERVICE_DISABLED error against a project named "my-gcp-project".
+#   terraform.tfvars is NOT the same file as terraform.tfvars.example --
+#   Terraform never auto-loads the .example one.
+project = "REPLACE_WITH_REAL_PROJECT_ID"
+region  = "us-east1"
+zone    = "us-east1-b"
+prefix  = "adc-cluster"
+
+# ---------- Instance ----------
+# THE ONLY KNOB FOR CLUSTER SIZE. 1 to 32, 32 being the NetScaler cluster
+# limit. No .tf file needs editing at any size. Watch GCP vCPU quota first:
+# machine_type below is per node.
+node_count = 3
+
+# Must allow 3 NICs: GCP permits at most one NIC per vCPU. Per node.
+machine_type = "n2d-standard-8"
+
+image = "https://www.googleapis.com/compute/v1/projects/cluster-gcp/global/images/tej-freebsd-114"
+
+# Resolved on the machine running Terraform. A leading ~ is expanded.
+public_ssh_key_file = "~/.ssh/id_rsa.pub"
+
+# Only needed if the target networks use tag-scoped firewall rules. New
+# networks created here use untagged rules, so this stays empty.
+network_tags = []
+
+# IP forwarding and the cloud-platform API scope are always on and are NOT
+# tfvars settings -- they are hardcoded in adc_instances.tf because the cluster
+# cannot work without them:
+#   can_ip_forward = true                 "Enable IP forwarding"
+#   scopes         = ["cloud-platform"]   "Allow full access to all Cloud APIs"
+# Verify after apply with:  terraform output instance_settings
+# Only the identity is adjustable; empty means the default compute SA.
+service_account_email = ""
+
+# ---------- Networks ----------
+# Create all three. Each NIC of a VM must be on a different network, so this
+# deployment always needs exactly three.
+use_existing_networks = false
+
+# 172.20.x deliberately: must not overlap the peer network below, and must not
+# collide with the 10.0.x / 10.10.x / 10.20.x / 10.50.x ranges already in use.
+management_subnet_cidr_block = "172.20.1.0/24"
+client_subnet_cidr_block     = "172.20.2.0/24"
+server_subnet_cidr_block     = "172.20.3.0/24"
+
+# THE ONE THAT MATTERS. A new VPC is isolated -- without this, Terraform has no
+# route to the NSIPs and the apply fails at the password reset after building
+# everything. Set it to the network the Terraform host is on.
+#   gcloud compute instances describe <this-vm> --zone=us-east1-b \
+#     --format="value(networkInterfaces[].network.basename())"
+peer_network = "jaz-n1-mgmt"
+
+# CIDR of the subnet the Terraform host sits in, on the far side of the
+# peering. The management firewall opens NITRO and SSH to this range.
+controlling_subnet = "10.0.1.0/24"
+
+# Required for new networks: they permit no ingress until these exist.
+create_firewall_rules = true
+
+# ---------- Addressing ----------
+# Left to derive from the CIDRs above, since a fresh VPC has nothing in it:
+#   clip   172.20.1.10        (clip_host_offset = 10)
+#   nsips  172.20.1.11/12/13  (nsip_host_offset = 11)
+#   client 172.20.2.11/12/13  (data_host_offset = 11)
+#   server 172.20.3.11/12/13
+# Set nsips/clip explicitly only to pin them.
+nsips = []
+clip  = ""
+
+create_clip_alias = true
+
+# ---------- External addresses ----------
+# Management stays private: a public NSIP exposes NITRO and SSH to the whole
+# internet behind nothing but adc_admin_password. Reach the nodes over the
+# peering instead.
+assign_management_external_ip = false
+assign_client_external_ip     = true
+
+# ---------- Cluster ----------
+cluster_id = 1
+
+# Node 0 gets this, each later node base + its id; lowest wins the CCO
+# election. base + node_count - 1 must stay at or below 31.
+cluster_priority_base = 1
+
+# GCP's fabric drops frames with foreign MACs, so plain L2 steering (NONE) does
+# not work in cloud.
+cluster_tunnel_mode = "UDP"
+
+# 0/1 management, 1/1 client, 1/2 server.
+#
+# THE BACKPLANE GOES ON 0/1, unlike on-prem. A VPX auto-configures its NSIP
+# from nic0 and nothing else, so 0/1 is the only interface with an address.
+# A backplane on 1/1 or 1/2 has no IP, carries no heartbeat, and leaves the
+# joining node stuck at "(Adding)" until the apply times out 30 minutes later.
+management_interface = "0/1"
+backplane_interface  = "0/1"
+hello_interval       = 200
+
+# ---------- SNIPs ----------
+# Data plane only; not needed to form the cluster. Applied on the CLIP after
+# the cluster exists.
+configure_server_snips = true
+configure_client_snips = true
+save_cluster_config    = true
+
+# ---------- Credentials ----------
+adc_admin_username = "nsroot"
+
+# Supply out of band rather than writing it here:
+#   export TF_VAR_adc_admin_password='...'
+# It lands in terraform.tfstate in plaintext either way, so keep state out of
+# git. sensitive = true only masks CLI output.
+# adc_admin_password = "..."
+
+# ---------- Sequencing ----------
+enable_password_reset = true
+
+# A VPX regularly needs 6-10 minutes before NITRO answers. 300s was too short.
+adc_boot_wait = "600s"
+
+# Poll the NSIPs until NITRO answers instead of always sleeping the full
+# adc_boot_wait above, then wait only adc_boot_settle on top. Saves 3-5 min on
+# a typical apply, since adc_boot_wait is sized for the worst case.
+#
+# Off by default: the fixed wait is known-good, and "NITRO answers" is a
+# slightly earlier moment than "NITRO will accept a password change" --
+# adc_boot_settle covers that gap. Turn it on, and if the password reset starts
+# failing where it used to pass, raise adc_boot_settle rather than turning it
+# straight back off.
+#
+# The probe cannot fail an apply: on timeout, or with no curl on the Terraform
+# host, it warns and falls through. Needs curl and a route to the NSIPs.
+adaptive_boot_wait = false
+adc_boot_settle    = "90s"
+
+# Seconds the probe waits on any one node before giving up and continuing.
+# 900 is half again adc_boot_wait, so a genuinely slow boot is still caught.
+adc_boot_probe_timeout = 900
+
+# ---------- Progress logging ----------
+# Print a timestamped milestone after each phase: instances created, boot wait
+# done, passwords reset, cluster formed, SNIPs configured, config saved.
+#
+# The markers create nothing and nothing depends on them. They do re-run every
+# apply by design, so expect six trivial changes in every plan. Set false to
+# silence.
+progress_logs = true
+
+# Report node state while the cluster forms. citrixadc_cluster.this blocks for
+# 10-15 min printing only "Still creating..."; this polls node 0 over NITRO and
+# prints each transition, so a node stuck at "(Adding)" shows up in a minute
+# rather than at the 30m timeout.
+#
+# Runs alongside the cluster resource, not after it. Read-only, fail-safe, and
+# nothing depends on it.
+cluster_watch_logs     = true
+cluster_watch_interval = 20
+cluster_watch_timeout  = 2400
